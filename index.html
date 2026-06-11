@@ -1,1425 +1,1445 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<title>Snake Adventure</title>
-<style>
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-:root {
-  --primary:    #00e5ff;
-  --secondary:  #7c4dff;
-  --accent:     #ff6d00;
-  --success:    #69f0ae;
-  --danger:     #ff1744;
-  --gold:       #ffd740;
-  --bg-dark:    #050a1a;
-  --bg-panel:   rgba(10,20,50,0.88);
-  --text:       #e8f4fd;
-  --text-dim:   #7899bb;
-  --radius:     14px;
-  --glow-c:     0 0 18px rgba(0,229,255,0.55);
-  --glow-a:     0 0 18px rgba(255,109,0,0.55);
-  --glow-s:     0 0 18px rgba(105,240,174,0.55);
-  /* joystick settings (updated by JS) */
-  --dpad-size: 150px;
-}
-
-html, body {
-  width: 100%; height: 100%;
-  background: var(--bg-dark);
-  color: var(--text);
-  font-family: 'Segoe UI', Arial, sans-serif;
-  overflow: hidden;
-  touch-action: none;
-  user-select: none;
-  -webkit-user-select: none;
-}
-
-.screen {
-  position: fixed; inset: 0;
-  display: none;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  z-index: 10;
-}
-.screen.active { display: flex; }
-
-#bg-canvas {
-  position: fixed; inset: 0; z-index: 0;
-  pointer-events: none;
-}
-
-.panel {
-  background: var(--bg-panel);
-  border: 1px solid rgba(0,229,255,0.18);
-  border-radius: var(--radius);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  box-shadow: 0 8px 32px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.08);
-}
-
-/* ===== MENU ===== */
-#screen-menu { gap: 0; }
-.menu-logo { text-align: center; margin-bottom: 20px; }
-.menu-logo h1 {
-  font-size: clamp(22px, 5vw, 40px);
-  font-weight: 900; letter-spacing: 3px; text-transform: uppercase;
-  background: linear-gradient(135deg, var(--primary), var(--secondary));
-  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
-  filter: drop-shadow(0 0 14px rgba(0,229,255,0.5));
-}
-.menu-logo .logo-sub { font-size: 12px; letter-spacing: 4px; color: var(--text-dim); text-transform: uppercase; margin-top: 4px; }
-.menu-snake-emoji { font-size: 44px; animation: floatAnim 3s ease-in-out infinite; display: block; margin-bottom: 6px; }
-@keyframes floatAnim { 0%,100%{transform:translateY(0) rotate(-5deg);}50%{transform:translateY(-10px) rotate(5deg);} }
-
-.menu-box { padding: 22px 28px; min-width: 260px; max-width: 360px; width: 88vw; }
-.menu-btn {
-  display: flex; align-items: center; gap: 12px;
-  width: 100%; padding: 12px 18px; margin: 5px 0;
-  background: rgba(0,229,255,0.07); border: 1px solid rgba(0,229,255,0.22);
-  border-radius: 10px; color: var(--text); font-size: 15px; font-weight: 600;
-  letter-spacing: 1px; cursor: pointer; transition: all 0.2s; text-transform: uppercase;
-}
-.menu-btn:hover, .menu-btn:active {
-  background: rgba(0,229,255,0.18); border-color: var(--primary);
-  box-shadow: var(--glow-c); transform: translateX(4px);
-}
-.menu-btn .btn-icon { font-size: 18px; }
-
-/* ===== SCREEN BOX ===== */
-.screen-title {
-  font-size: clamp(16px, 3.5vw, 22px); font-weight: 900; text-transform: uppercase;
-  letter-spacing: 2px;
-  background: linear-gradient(135deg, var(--primary), var(--secondary));
-  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
-  margin-bottom: 6px; text-align: center;
-}
-.screen-box {
-  padding: 18px 22px; width: min(94vw, 520px);
-  max-height: 90vh; overflow-y: auto;
-}
-.screen-box::-webkit-scrollbar { width: 3px; }
-.screen-box::-webkit-scrollbar-thumb { background: var(--primary); border-radius: 3px; }
-
-.back-btn {
-  display: inline-flex; align-items: center; gap: 6px;
-  padding: 7px 14px; background: rgba(255,255,255,0.07);
-  border: 1px solid rgba(255,255,255,0.15); border-radius: 8px;
-  color: var(--text-dim); font-size: 13px; cursor: pointer; margin-bottom: 12px; transition: all 0.2s;
-}
-.back-btn:hover { color: var(--text); border-color: var(--primary); }
-
-/* ===== DIFFICULTY ===== */
-.diff-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 14px; }
-.diff-card {
-  display: flex; flex-direction: column; align-items: center; justify-content: center;
-  gap: 5px; padding: 18px 12px; border-radius: 12px; cursor: pointer;
-  border: 2px solid transparent; transition: all 0.25s;
-  font-weight: 700; font-size: 14px; text-transform: uppercase; letter-spacing: 1px;
-}
-.diff-card .diff-icon { font-size: 28px; }
-.diff-card.easy   { background: rgba(105,240,174,0.1); border-color: rgba(105,240,174,0.3); }
-.diff-card.normal { background: rgba(255,215,64,0.1);  border-color: rgba(255,215,64,0.3); }
-.diff-card.hard   { background: rgba(255,109,0,0.1);   border-color: rgba(255,109,0,0.3); }
-.diff-card.extreme{ background: rgba(255,23,68,0.1);   border-color: rgba(255,23,68,0.3); }
-.diff-card:hover,.diff-card:active { transform: scale(1.05); }
-.diff-card.easy:hover   { box-shadow: var(--glow-s); border-color: var(--success); }
-.diff-card.normal:hover { box-shadow: 0 0 18px rgba(255,215,64,0.55); border-color: var(--gold); }
-.diff-card.hard:hover   { box-shadow: var(--glow-a); border-color: var(--accent); }
-.diff-card.extreme:hover{ box-shadow: 0 0 18px rgba(255,23,68,0.55); border-color: var(--danger); }
-.diff-sub { font-size: 10px; font-weight: 400; color: var(--text-dim); }
-
-/* ===== STAGE SELECT ===== */
-.stage-grid {
-  display: grid; grid-template-columns: repeat(3, 1fr);
-  gap: 8px; margin-top: 12px;
-}
-.stage-card {
-  display: flex; flex-direction: column; align-items: center; justify-content: center;
-  padding: 12px 6px; border-radius: 10px; cursor: pointer;
-  border: 2px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.04);
-  transition: all 0.2s; gap: 3px;
-}
-.stage-card .stage-icon { font-size: 24px; }
-.stage-card .stage-name { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; text-align: center; }
-.stage-card .stage-num  { font-size: 9px; color: var(--text-dim); }
-.stage-stars { color: var(--gold); font-size: 10px; }
-.stage-card.unlocked:hover,.stage-card.unlocked:active { border-color: var(--primary); box-shadow: var(--glow-c); transform: scale(1.05); }
-.stage-card.locked { opacity: 0.4; cursor: not-allowed; }
-
-/* ===== SCORES ===== */
-.score-tabs { display: flex; gap: 5px; flex-wrap: wrap; margin-bottom: 12px; }
-.score-tab {
-  padding: 6px 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.15);
-  background: transparent; color: var(--text-dim); font-size: 11px; font-weight: 600;
-  cursor: pointer; transition: all 0.2s; text-transform: uppercase;
-}
-.score-tab.active { background: var(--primary); color: var(--bg-dark); border-color: var(--primary); }
-.score-table { width: 100%; border-collapse: collapse; }
-.score-table th {
-  font-size: 10px; text-transform: uppercase; letter-spacing: 1px;
-  color: var(--text-dim); padding: 5px 8px; text-align: left;
-  border-bottom: 1px solid rgba(255,255,255,0.08);
-}
-.score-table td { padding: 7px 8px; font-size: 12px; border-bottom: 1px solid rgba(255,255,255,0.05); }
-.score-table tr:hover td { background: rgba(0,229,255,0.05); }
-.score-val { color: var(--primary); font-weight: 700; }
-
-/* ===== ACHIEVEMENTS ===== */
-.ach-list { display: flex; flex-direction: column; gap: 7px; margin-top: 8px; }
-.ach-item {
-  display: flex; align-items: center; gap: 10px; padding: 10px 14px;
-  border-radius: 10px; background: rgba(255,255,255,0.04);
-  border: 1px solid rgba(255,255,255,0.08); transition: all 0.2s;
-}
-.ach-item.earned { background: rgba(0,229,255,0.07); border-color: rgba(0,229,255,0.25); }
-.ach-icon { font-size: 26px; }
-.ach-info { flex: 1; }
-.ach-name { font-weight: 700; font-size: 13px; }
-.ach-desc { font-size: 10px; color: var(--text-dim); margin-top: 2px; }
-.ach-badge { font-size: 16px; }
-
-/* ===== LANGUAGE ===== */
-.lang-options { display: flex; gap: 10px; flex-direction: column; margin-top: 10px; }
-.lang-btn {
-  display: flex; align-items: center; gap: 12px; padding: 14px 18px;
-  border-radius: 12px; background: rgba(255,255,255,0.04);
-  border: 2px solid rgba(255,255,255,0.1); cursor: pointer; transition: all 0.2s;
-}
-.lang-btn:hover,.lang-btn.selected { border-color: var(--primary); background: rgba(0,229,255,0.1); box-shadow: var(--glow-c); }
-.lang-flag { font-size: 28px; }
-.lang-name { font-weight: 700; font-size: 15px; }
-.lang-native { font-size: 11px; color: var(--text-dim); }
-
-/* ===== ABOUT ===== */
-.about-content { text-align: center; }
-.about-content h2 {
-  font-size: 22px; font-weight: 900;
-  background: linear-gradient(135deg, var(--primary), var(--secondary));
-  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
-  margin-bottom: 5px;
-}
-.about-content .version { color: var(--text-dim); font-size: 11px; margin-bottom: 14px; }
-.about-content p { color: var(--text-dim); font-size: 12px; line-height: 1.7; margin-bottom: 14px; }
-.tech-list { display: flex; gap: 7px; justify-content: center; flex-wrap: wrap; }
-.tech-badge { padding: 4px 10px; border-radius: 20px; background: rgba(0,229,255,0.1); border: 1px solid rgba(0,229,255,0.25); font-size: 11px; font-weight: 600; color: var(--primary); }
-.divider { height: 1px; background: rgba(255,255,255,0.08); margin: 12px 0; }
-
-/* ===== SETTINGS SCREEN ===== */
-.settings-section { margin-top: 14px; }
-.settings-label { font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: var(--text-dim); margin-bottom: 8px; }
-.settings-row { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
-.settings-row label { font-size: 13px; min-width: 90px; color: var(--text-dim); }
-.settings-row input[type=range] { flex: 1; accent-color: var(--primary); height: 4px; cursor: pointer; }
-.settings-val { font-size: 13px; font-weight: 700; color: var(--primary); min-width: 40px; text-align: right; }
-
-.pos-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-top: 8px; }
-.pos-btn {
-  padding: 10px 6px; border-radius: 8px; text-align: center; cursor: pointer;
-  border: 2px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.04);
-  font-size: 18px; transition: all 0.2s;
-}
-.pos-btn.active { border-color: var(--primary); background: rgba(0,229,255,0.15); box-shadow: var(--glow-c); }
-.pos-btn:hover { border-color: rgba(0,229,255,0.4); }
-.pos-label { font-size: 9px; color: var(--text-dim); margin-top: 3px; text-transform: uppercase; letter-spacing: 0.5px; }
-
-/* ===== GAME SCREEN ===== */
-#screen-game {
-  flex-direction: column;
-  padding: 0;
-  align-items: stretch;
-  justify-content: flex-start;
-}
-
-/* HUD — top bar with progress integrated */
-#hud {
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 4px 10px;
-  background: rgba(5,10,26,0.95);
-  border-bottom: 1px solid rgba(0,229,255,0.15);
-  flex-shrink: 0; z-index: 20;
-  min-height: 42px; gap: 4px;
-}
-.hud-seg { display: flex; flex-direction: column; align-items: center; min-width: 0; }
-.hud-label { font-size: 8px; text-transform: uppercase; letter-spacing: 0.8px; color: var(--text-dim); white-space: nowrap; }
-.hud-val   { font-size: 13px; font-weight: 700; color: var(--primary); line-height: 1.2; }
-.hud-val.gold  { color: var(--gold); }
-.hud-val.green { color: var(--success); }
-
-/* Progress in HUD — wider segment */
-#hud-progress-seg {
-  flex: 1; min-width: 60px; max-width: 100px;
-  display: flex; flex-direction: column; align-items: stretch; justify-content: center;
-}
-#hud-progress-label { font-size: 8px; color: var(--text-dim); text-align: center; margin-bottom: 2px; }
-#hud-progress-bg {
-  height: 6px; border-radius: 3px;
-  background: rgba(255,255,255,0.1); overflow: hidden;
-}
-#hud-progress-fill {
-  height: 100%; border-radius: 3px;
-  background: linear-gradient(90deg, var(--success), var(--primary));
-  transition: width 0.3s; width: 0%;
-}
-
-#pause-btn {
-  background: rgba(0,229,255,0.1); border: 1px solid rgba(0,229,255,0.25);
-  border-radius: 7px; color: var(--primary); font-size: 16px;
-  padding: 3px 8px; cursor: pointer; flex-shrink: 0;
-}
-#pause-btn:hover { background: rgba(0,229,255,0.2); }
-
-/* ===== GAME BODY: left dpad panel + right canvas ===== */
-#game-body {
-  flex: 1;
-  display: flex;
-  flex-direction: row;
-  overflow: hidden;
-  position: relative;
-}
-
-/* Left panel: D-pad lives here, separate from canvas */
-#dpad-panel {
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;       /* default: center (mid) */
-  justify-content: center;
-  padding: 8px;
-  background: rgba(0,0,0,0.3);
-  border-right: 1px solid rgba(0,229,255,0.12);
-  z-index: 30;
-  /* width set by JS based on dpad size */
-}
-
-/* Position variants for dpad-panel */
-#dpad-panel.pos-top    { align-items: flex-start; padding-top: 16px; }
-#dpad-panel.pos-mid    { align-items: center; }
-#dpad-panel.pos-bottom { align-items: flex-end; padding-bottom: 16px; }
-
-/* Right panel: canvas */
-#game-container {
-  flex: 1;
-  position: relative;
-  overflow: hidden;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 0;
-}
-#game-canvas {
-  display: block;
-  image-rendering: pixelated;
-  max-width: 100%;
-  max-height: 100%;
-}
-
-/* D-Pad */
-#dpad {
-  position: relative;
-  width: var(--dpad-size);
-  height: var(--dpad-size);
-}
-.dpad-btn {
-  position: absolute;
-  background: rgba(0,229,255,0.13);
-  border: 2px solid rgba(0,229,255,0.35);
-  border-radius: 10px;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 20px; cursor: pointer;
-  transition: background 0.1s; touch-action: none;
-  /* size = 33% of dpad container */
-  width: 33%; height: 33%;
-}
-.dpad-btn:active { background: rgba(0,229,255,0.4); }
-#dpad-up    { top: 0;    left: 33.3%; }
-#dpad-down  { bottom: 0; left: 33.3%; }
-#dpad-left  { top: 33.3%; left: 0; }
-#dpad-right { top: 33.3%; right: 0; }
-
-/* ===== OVERLAYS ===== */
-.game-overlay {
-  position: absolute; inset: 0;
-  display: none; align-items: center; justify-content: center;
-  z-index: 50; background: rgba(5,10,26,0.78); backdrop-filter: blur(6px);
-}
-.game-overlay.visible { display: flex; }
-
-.overlay-box {
-  padding: 22px 28px; text-align: center;
-  min-width: 240px; max-width: 320px; width: 80vw;
-  animation: popIn 0.35s cubic-bezier(0.34,1.56,0.64,1);
-}
-@keyframes popIn { from{transform:scale(0.6);opacity:0}to{transform:scale(1);opacity:1} }
-.overlay-title { font-size: 22px; font-weight: 900; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 14px; }
-.overlay-title.danger  { color: var(--danger); text-shadow: 0 0 20px rgba(255,23,68,0.7); }
-.overlay-title.success { color: var(--success); text-shadow: 0 0 20px rgba(105,240,174,0.7); }
-.overlay-title.info    { color: var(--primary); }
-
-.overlay-score-row {
-  display: flex; justify-content: space-between; align-items: center;
-  padding: 7px 0; border-bottom: 1px solid rgba(255,255,255,0.07); font-size: 12px;
-}
-.overlay-score-row .val { font-weight: 700; color: var(--primary); }
-.overlay-score-row .val.gold { color: var(--gold); }
-
-.stars-row { font-size: 30px; margin: 12px 0 5px; letter-spacing: 6px; animation: starsPop 0.6s 0.3s both; }
-@keyframes starsPop { from{transform:scale(0);opacity:0}to{transform:scale(1);opacity:1} }
-
-.overlay-btns { display: flex; flex-direction: column; gap: 7px; margin-top: 14px; }
-.ov-btn {
-  padding: 11px 18px; border-radius: 9px;
-  font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;
-  cursor: pointer; border: 2px solid transparent; transition: all 0.2s;
-}
-.ov-btn.primary { background: var(--primary); color: var(--bg-dark); border-color: var(--primary); }
-.ov-btn.primary:hover { box-shadow: var(--glow-c); transform: translateY(-2px); }
-.ov-btn.secondary { background: transparent; color: var(--text); border-color: rgba(255,255,255,0.2); }
-.ov-btn.secondary:hover { border-color: var(--primary); color: var(--primary); }
-.ov-btn.danger-btn { background: transparent; color: var(--danger); border-color: rgba(255,23,68,0.3); }
-.ov-btn.danger-btn:hover { border-color: var(--danger); box-shadow: 0 0 14px rgba(255,23,68,0.4); }
-
-/* ===== TOAST ===== */
-#toast {
-  position: fixed; bottom: 70px; left: 50%;
-  transform: translateX(-50%) translateY(60px);
-  background: rgba(10,20,50,0.95); border: 1px solid rgba(0,229,255,0.3);
-  border-radius: 30px; padding: 9px 20px; font-size: 12px; font-weight: 600;
-  color: var(--primary); z-index: 9000; opacity: 0; pointer-events: none;
-  transition: all 0.4s cubic-bezier(0.34,1.56,0.64,1);
-}
-#toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
-
-/* ===== ACH POPUP ===== */
-#ach-popup {
-  position: fixed; top: 54px; right: -320px; z-index: 8000;
-  display: flex; align-items: center; gap: 9px; padding: 10px 16px;
-  border-radius: 12px; background: rgba(10,20,50,0.95);
-  border: 1px solid rgba(255,215,64,0.4); box-shadow: 0 0 20px rgba(255,215,64,0.25);
-  max-width: 280px; transition: right 0.5s cubic-bezier(0.34,1.56,0.64,1);
-}
-#ach-popup.show { right: 12px; }
-#ach-popup .ap-icon { font-size: 24px; }
-#ach-popup .ap-title { font-size: 9px; color: var(--gold); text-transform: uppercase; letter-spacing: 1px; }
-#ach-popup .ap-name { font-size: 12px; font-weight: 700; }
-
-/* ===== PARTICLES ===== */
-.particle { position: absolute; border-radius: 50%; pointer-events: none; z-index: 40; animation: particleFly 0.8s ease-out forwards; }
-@keyframes particleFly { to{opacity:0;transform:translate(var(--tx),var(--ty)) scale(0);} }
-
-@media (orientation: landscape) {
-  #screen-menu { flex-direction: row; align-items: center; justify-content: center; gap: clamp(16px,4vw,40px); }
-  .menu-logo { margin-bottom: 0; }
-  .menu-box { width: clamp(220px,42vw,340px); max-height: 90vh; overflow-y: auto; }
-}
-@media (orientation: portrait) {
-  #screen-menu { justify-content: flex-start; padding-top: 20px; overflow-y: auto; }
-  #dpad-panel { display: none; }
-  #dpad-touch-portrait {
-    display: flex !important;
-    position: absolute; bottom: 12px; left: 12px;
-    width: var(--dpad-size); height: var(--dpad-size); z-index: 30;
-  }
-}
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RPG Animation System - Full Game + Showcase</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: #0a0a12;
+      font-family: 'Inter', sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 20px;
+    }
+    .game-wrapper {
+      width: 1200px;
+      max-width: 100%;
+      background: linear-gradient(160deg, #0f0f1a 0%, #0a0818 100%);
+      border: 2px solid rgba(108, 63, 197, 0.4);
+      border-radius: 20px;
+      overflow: hidden;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.8);
+    }
+    .menu-bar {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 10px 20px;
+      background: rgba(20, 10, 50, 0.8);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(108,63,197,0.4);
+      flex-wrap: wrap;
+    }
+    .logo {
+      font-family: 'Orbitron', monospace;
+      font-weight: 700;
+      font-size: 16px;
+      color: #c090ff;
+      letter-spacing: 2px;
+      margin-right: 15px;
+      text-shadow: 0 0 15px #6c3fc5;
+    }
+    .menu-btn {
+      background: rgba(108,63,197,0.1);
+      border: 1px solid rgba(108,63,197,0.4);
+      color: #b0a0d0;
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-family: 'Orbitron', monospace;
+      font-size: 9px;
+      letter-spacing: 0.8px;
+      cursor: pointer;
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+    .menu-btn.active {
+      background: #6c3fc5;
+      border-color: #9060ff;
+      color: white;
+      box-shadow: 0 0 15px #6c3fc5aa;
+    }
+    .menu-btn:hover {
+      border-color: #9060ff;
+      background: rgba(108,63,197,0.3);
+    }
+    .game-content {
+      display: flex;
+      flex-direction: column;
+    }
+    .canvas-world-wrapper {
+      position: relative;
+      width: 100%;
+      height: 400px;
+      background: #0b0b14;
+    }
+    .hud {
+      position: absolute;
+      bottom: 15px;
+      left: 20px;
+      color: white;
+      font-family: 'Orbitron', monospace;
+      font-size: 11px;
+      background: rgba(0,0,0,0.6);
+      padding: 6px 14px;
+      border-radius: 20px;
+      backdrop-filter: blur(8px);
+      border: 1px solid #6c3fc5;
+    }
+    .controls-hint {
+      position: absolute;
+      bottom: 15px;
+      right: 20px;
+      color: #aaa;
+      font-size: 10px;
+      background: rgba(0,0,0,0.5);
+      padding: 5px 14px;
+      border-radius: 20px;
+    }
+    .showcase-panel {
+      padding: 16px;
+      background: rgba(10, 5, 20, 0.8);
+      max-height: 500px;
+      overflow-y: auto;
+    }
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: #0a0a12; }
+    ::-webkit-scrollbar-thumb { background: #4a2090; border-radius: 3px; }
+    @keyframes floatUp { 0% { transform: translateY(0); opacity: 1; } 100% { transform: translateY(-60px); opacity: 0; } }
+    @keyframes slideIn { 0% { transform: translateX(100%); opacity: 0; } 100% { transform: translateX(0); opacity: 1; } }
+    @keyframes lvlupPop { 0% { transform: scale(0.5) rotate(-5deg); opacity: 0; } 100% { transform: scale(1) rotate(0deg); opacity: 1; } }
+    @keyframes windowOpen { 0% { transform: scale(0.8) translateY(-20px); opacity: 0; } 100% { transform: scale(1) translateY(0); opacity: 1; } }
+    @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.5; } }
+  </style>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
 </head>
 <body>
+<div id="root"></div>
 
-<canvas id="bg-canvas"></canvas>
-<div id="toast"></div>
-<div id="ach-popup">
-  <div class="ap-icon" id="ach-popup-icon">🥇</div>
-  <div class="ap-text">
-    <div class="ap-title" id="ach-popup-label">Achievement Unlocked!</div>
-    <div class="ap-name" id="ach-popup-name">First Apple</div>
-  </div>
-</div>
+<script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
-<!-- MAIN MENU -->
-<div class="screen active" id="screen-menu">
-  <div class="menu-logo">
-    <span class="menu-snake-emoji">🐍</span>
-    <h1 id="menu-title">Snake Adventure</h1>
-    <div class="logo-sub" id="menu-sub">Mobile Edition</div>
-  </div>
-  <div class="panel menu-box">
-    <button class="menu-btn" id="btn-play"><span class="btn-icon">▶</span><span id="txt-play">PLAY</span></button>
-    <button class="menu-btn" id="btn-bestscores"><span class="btn-icon">🏆</span><span id="txt-bestscore">BEST SCORE</span></button>
-    <button class="menu-btn" id="btn-achievements"><span class="btn-icon">🎖</span><span id="txt-achievement">ACHIEVEMENT</span></button>
-    <button class="menu-btn" id="btn-settings"><span class="btn-icon">⚙️</span><span id="txt-settings">SETTINGS</span></button>
-    <button class="menu-btn" id="btn-lang"><span class="btn-icon">🌐</span><span id="txt-language">LANGUAGE</span></button>
-    <button class="menu-btn" id="btn-about"><span class="btn-icon">ℹ</span><span id="txt-about">ABOUT</span></button>
-  </div>
-</div>
+<script type="text/babel">
+const { useState, useEffect, useRef, useCallback } = React;
 
-<!-- DIFFICULTY -->
-<div class="screen" id="screen-difficulty">
-  <div class="panel screen-box">
-    <button class="back-btn" id="diff-back">← <span id="txt-back-diff">Back</span></button>
-    <div class="screen-title" id="txt-choose-diff">Choose Difficulty</div>
-    <div class="diff-grid">
-      <div class="diff-card easy" data-diff="easy"><div class="diff-icon">🟢</div><div id="txt-easy">EASY</div><div class="diff-sub" id="txt-easy-sub">Slow Speed</div></div>
-      <div class="diff-card normal" data-diff="normal"><div class="diff-icon">🟡</div><div id="txt-normal">NORMAL</div><div class="diff-sub" id="txt-normal-sub">Medium Speed</div></div>
-      <div class="diff-card hard" data-diff="hard"><div class="diff-icon">🔴</div><div id="txt-hard">HARD</div><div class="diff-sub" id="txt-hard-sub">Fast Speed</div></div>
-      <div class="diff-card extreme" data-diff="extreme"><div class="diff-icon">⚫</div><div id="txt-extreme">EXTREME</div><div class="diff-sub" id="txt-extreme-sub">Max Speed</div></div>
-    </div>
-  </div>
-</div>
-
-<!-- STAGE SELECT -->
-<div class="screen" id="screen-stages">
-  <div class="panel screen-box">
-    <button class="back-btn" id="stage-back">← <span id="txt-back-stage">Back</span></button>
-    <div class="screen-title" id="txt-choose-stage">Choose Stage</div>
-    <div class="stage-grid" id="stage-grid"></div>
-  </div>
-</div>
-
-<!-- BEST SCORES -->
-<div class="screen" id="screen-bestscores">
-  <div class="panel screen-box">
-    <button class="back-btn" id="bs-back">← <span id="txt-back-bs">Back</span></button>
-    <div class="screen-title" id="txt-best-scores">Best Scores</div>
-    <div class="score-tabs" id="score-tabs">
-      <button class="score-tab active" data-diff="easy">Easy</button>
-      <button class="score-tab" data-diff="normal">Normal</button>
-      <button class="score-tab" data-diff="hard">Hard</button>
-      <button class="score-tab" data-diff="extreme">Extreme</button>
-    </div>
-    <div id="score-table-wrap"></div>
-  </div>
-</div>
-
-<!-- ACHIEVEMENTS -->
-<div class="screen" id="screen-achievements">
-  <div class="panel screen-box">
-    <button class="back-btn" id="ach-back">← <span id="txt-back-ach">Back</span></button>
-    <div class="screen-title" id="txt-achievements">Achievements</div>
-    <div class="ach-list" id="ach-list"></div>
-  </div>
-</div>
-
-<!-- SETTINGS -->
-<div class="screen" id="screen-settings">
-  <div class="panel screen-box">
-    <button class="back-btn" id="settings-back">← <span id="txt-back-settings">Back</span></button>
-    <div class="screen-title" id="txt-settings-title">Settings</div>
-
-    <div class="settings-section">
-      <div class="settings-label" id="txt-joystick-size">Joystick Size</div>
-      <div class="settings-row">
-        <label id="txt-size-label">Size</label>
-        <input type="range" id="dpad-size-slider" min="100" max="220" step="10" value="150">
-        <span class="settings-val" id="dpad-size-val">150px</span>
-      </div>
-    </div>
-
-    <div class="settings-section" style="margin-top:20px;">
-      <div class="settings-label" id="txt-joystick-pos">Joystick Position (vertical)</div>
-      <div class="pos-grid">
-        <div class="pos-btn" data-pos="top" id="pos-top">
-          ⬆<div class="pos-label" id="txt-pos-top">Top</div>
-        </div>
-        <div class="pos-btn active" data-pos="mid" id="pos-mid">
-          ⬛<div class="pos-label" id="txt-pos-mid">Center</div>
-        </div>
-        <div class="pos-btn" data-pos="bottom" id="pos-bottom">
-          ⬇<div class="pos-label" id="txt-pos-bottom">Bottom</div>
-        </div>
-      </div>
-    </div>
-
-    <div class="divider"></div>
-    <div style="font-size:11px;color:var(--text-dim);text-align:center;" id="txt-settings-note">
-      Joystick is always on the left. Game area is always on the right.
-    </div>
-  </div>
-</div>
-
-<!-- LANGUAGE -->
-<div class="screen" id="screen-language">
-  <div class="panel screen-box">
-    <button class="back-btn" id="lang-back">← <span id="txt-back-lang">Back</span></button>
-    <div class="screen-title" id="txt-select-lang">Select Language</div>
-    <div class="lang-options">
-      <div class="lang-btn" data-lang="id"><div class="lang-flag">🇮🇩</div><div><div class="lang-name">Bahasa Indonesia</div><div class="lang-native">Indonesia</div></div></div>
-      <div class="lang-btn" data-lang="en"><div class="lang-flag">🇬🇧</div><div><div class="lang-name">English</div><div class="lang-native">English (UK)</div></div></div>
-    </div>
-  </div>
-</div>
-
-<!-- ABOUT -->
-<div class="screen" id="screen-about">
-  <div class="panel screen-box">
-    <button class="back-btn" id="about-back">← <span id="txt-back-about">Back</span></button>
-    <div class="about-content">
-      <div style="font-size:44px;margin-bottom:8px;">🐍</div>
-      <h2>Snake Adventure</h2>
-      <div class="version" id="about-version">Version 1.1</div>
-      <p id="about-desc">Game petualangan ular dengan berbagai stage, rintangan, achievement, dan tingkat kesulitan. Jelajahi dunia dari padang rumput hingga neraka!</p>
-      <div class="divider"></div>
-      <div class="screen-title" style="font-size:13px;margin-bottom:8px;" id="txt-technology">Technology</div>
-      <div class="tech-list">
-        <div class="tech-badge">HTML5</div><div class="tech-badge">CSS3</div>
-        <div class="tech-badge">JavaScript</div><div class="tech-badge">Canvas API</div>
-        <div class="tech-badge">Web Audio</div>
-      </div>
-      <div class="divider"></div>
-      <div style="font-size:11px;color:var(--text-dim);" id="about-footer">Designed for Android Mobile · Landscape Mode</div>
-    </div>
-  </div>
-</div>
-
-<!-- GAME SCREEN -->
-<div class="screen" id="screen-game">
-  <!-- HUD with progress integrated -->
-  <div id="hud">
-    <div class="hud-seg">
-      <span class="hud-label" id="hud-score-label">SKOR</span>
-      <span class="hud-val" id="hud-score">0</span>
-    </div>
-    <div class="hud-seg">
-      <span class="hud-label" id="hud-stage-label">STAGE</span>
-      <span class="hud-val gold" id="hud-stage">1</span>
-    </div>
-    <!-- Progress bar in HUD -->
-    <div id="hud-progress-seg">
-      <div id="hud-progress-label">0 / 20</div>
-      <div id="hud-progress-bg"><div id="hud-progress-fill"></div></div>
-    </div>
-    <div class="hud-seg">
-      <span class="hud-label" id="hud-best-label">BEST</span>
-      <span class="hud-val" id="hud-best">0</span>
-    </div>
-    <div class="hud-seg">
-      <span class="hud-label" id="hud-diff-label">LEVEL</span>
-      <span class="hud-val" id="hud-diff">EASY</span>
-    </div>
-    <button id="pause-btn">⏸</button>
-  </div>
-
-  <!-- Game body: left dpad panel + right canvas -->
-  <div id="game-body">
-
-    <!-- Left D-Pad panel -->
-    <div id="dpad-panel" class="pos-mid">
-      <div id="dpad">
-        <div class="dpad-btn" id="dpad-up">↑</div>
-        <div class="dpad-btn" id="dpad-down">↓</div>
-        <div class="dpad-btn" id="dpad-left">←</div>
-        <div class="dpad-btn" id="dpad-right">→</div>
-      </div>
-    </div>
-
-    <!-- Canvas area — NO d-pad here -->
-    <div id="game-container">
-      <canvas id="game-canvas"></canvas>
-
-      <!-- Overlays inside canvas area -->
-      <div class="game-overlay" id="overlay-pause">
-        <div class="panel overlay-box">
-          <div class="overlay-title info" id="txt-paused">PAUSED</div>
-          <div class="overlay-btns">
-            <button class="ov-btn primary" id="btn-resume">▶ <span id="txt-resume">Resume</span></button>
-            <button class="ov-btn secondary" id="btn-restart-pause">↺ <span id="txt-restart">Restart</span></button>
-            <button class="ov-btn danger-btn" id="btn-menu-pause">⌂ <span id="txt-main-menu">Main Menu</span></button>
-          </div>
-        </div>
-      </div>
-
-      <div class="game-overlay" id="overlay-gameover">
-        <div class="panel overlay-box">
-          <div class="overlay-title danger" id="txt-gameover">GAME OVER</div>
-          <div class="overlay-score-row"><span id="txt-go-score">Score</span><span class="val" id="go-score">0</span></div>
-          <div class="overlay-score-row"><span id="txt-go-best">Best Score</span><span class="val gold" id="go-best">0</span></div>
-          <div class="overlay-btns">
-            <button class="ov-btn primary" id="btn-retry"><span id="txt-retry">Retry</span></button>
-            <button class="ov-btn secondary" id="btn-menu-go"><span id="txt-menu-go">Main Menu</span></button>
-          </div>
-        </div>
-      </div>
-
-      <div class="game-overlay" id="overlay-stageclear">
-        <div class="panel overlay-box">
-          <div class="overlay-title success" id="txt-stage-clear">STAGE CLEAR!</div>
-          <div class="stars-row" id="stage-stars-display">⭐⭐⭐</div>
-          <div class="overlay-score-row"><span id="txt-sc-score">Score</span><span class="val" id="sc-score">0</span></div>
-          <div class="overlay-score-row"><span id="txt-sc-bonus">Stage Bonus</span><span class="val gold" id="sc-bonus">0</span></div>
-          <div class="overlay-btns">
-            <button class="ov-btn primary" id="btn-next-stage"><span id="txt-next-stage">Next Stage</span></button>
-            <button class="ov-btn secondary" id="btn-menu-sc"><span id="txt-menu-sc">Main Menu</span></button>
-          </div>
-        </div>
-      </div>
-
-    </div><!-- end game-container -->
-  </div><!-- end game-body -->
-</div><!-- end screen-game -->
-
-<script>
-'use strict';
-
-/* ============================================================
-   SECTION 1: CONSTANTS & CONFIG
-   ============================================================ */
-const STAGES = [
-  { id:1, name:{id:'Padang Rumput',en:'Grassland'},    icon:'🌿', target:20, obstacles:[],              movingObstacles:false, icy:false, lava:false, color:['#0d2a0d','#1a4d1a'], wallColor:null },
-  { id:2, name:{id:'Labirin Batu',en:'Stone Maze'},    icon:'🪨', target:30, obstacles:'static',        movingObstacles:false, icy:false, lava:false, color:['#1a1510','#2d2318'], wallColor:'#8B7355' },
-  { id:3, name:{id:'Gurun Pasir',en:'Desert'},         icon:'🏜️', target:40, obstacles:'moving_rocks',  movingObstacles:true,  icy:false, lava:false, color:['#2a1f08','#4d3a10'], wallColor:'#C4A35A' },
-  { id:4, name:{id:'Tanah Es',en:'Ice Land'},          icon:'🧊', target:50, obstacles:[],              movingObstacles:false, icy:true,  lava:false, color:['#08141f','#0d2233'], wallColor:'#88C4E8' },
-  { id:5, name:{id:'Gunung Berapi',en:'Volcano'},      icon:'🌋', target:60, obstacles:'lava',          movingObstacles:true,  icy:false, lava:true,  color:['#1a0500','#330a00'], wallColor:'#FF4500' },
-  { id:6, name:{id:'Neraka',en:'Hell Challenge'},      icon:'😈', target:100,obstacles:'all',           movingObstacles:true,  icy:true,  lava:true,  color:['#1a001a','#2d002d'], wallColor:'#CC00CC' },
-];
-
-const DIFFICULTY = {
-  easy:    { speed:220, bonus:0,  label:{id:'MUDAH',  en:'EASY'   } },
-  normal:  { speed:160, bonus:5,  label:{id:'NORMAL', en:'NORMAL' } },
-  hard:    { speed:110, bonus:10, label:{id:'SULIT',  en:'HARD'   } },
-  extreme: { speed:70,  bonus:20, label:{id:'EKSTREM',en:'EXTREME'} },
+// ============================================================
+// ANIMATION STATE MACHINE CONFIG
+// ============================================================
+const PLAYER_ANIMATIONS = {
+  idle_down:   { frames: 4, row: 0, fps: 4,  loop: true,  label: "Idle Down" },
+  idle_up:     { frames: 4, row: 1, fps: 4,  loop: true,  label: "Idle Up" },
+  idle_left:   { frames: 4, row: 2, fps: 4,  loop: true,  label: "Idle Left" },
+  idle_right:  { frames: 4, row: 3, fps: 4,  loop: true,  label: "Idle Right" },
+  walk_down:   { frames: 6, row: 0, fps: 8,  loop: true,  label: "Walk Down" },
+  walk_up:     { frames: 6, row: 1, fps: 8,  loop: true,  label: "Walk Up" },
+  walk_left:   { frames: 6, row: 2, fps: 8,  loop: true,  label: "Walk Left" },
+  walk_right:  { frames: 6, row: 3, fps: 8,  loop: true,  label: "Walk Right" },
+  run_down:    { frames: 6, row: 0, fps: 14, loop: true,  label: "Run Down" },
+  run_up:      { frames: 6, row: 1, fps: 14, loop: true,  label: "Run Up" },
+  run_left:    { frames: 6, row: 2, fps: 14, loop: true,  label: "Run Left" },
+  run_right:   { frames: 6, row: 3, fps: 14, loop: true,  label: "Run Right" },
+  dash:        { frames: 5, row: 4, fps: 18, loop: false, label: "Dash" },
+  attack1:     { frames: 5, row: 5, fps: 16, loop: false, label: "Attack Combo 1" },
+  attack2:     { frames: 6, row: 6, fps: 16, loop: false, label: "Attack Combo 2" },
+  attack3:     { frames: 7, row: 7, fps: 18, loop: false, label: "Attack Combo 3" },
+  skill_cast:  { frames: 8, row: 8, fps: 14, loop: false, label: "Skill Cast" },
+  ult_cast:    { frames: 10, row: 9, fps: 14, loop: false, label: "Ultimate Cast" },
+  hurt:        { frames: 3, row: 10, fps: 12, loop: false, label: "Hurt" },
+  knockback:   { frames: 4, row: 11, fps: 14, loop: false, label: "Knockback" },
+  death:       { frames: 8, row: 12, fps: 10, loop: false, label: "Death" },
+  revive:      { frames: 8, row: 12, fps: 8,  loop: false, label: "Revive" },
+  victory:     { frames: 6, row: 13, fps: 8,  loop: true,  label: "Victory" },
+  interaction: { frames: 4, row: 14, fps: 6,  loop: true,  label: "Interaction" },
+  gathering:   { frames: 6, row: 14, fps: 8,  loop: true,  label: "Gathering" },
+  mining:      { frames: 6, row: 15, fps: 8,  loop: true,  label: "Mining" },
+  fishing:     { frames: 8, row: 16, fps: 6,  loop: true,  label: "Fishing" },
+  crafting:    { frames: 6, row: 17, fps: 6,  loop: true,  label: "Crafting" },
 };
 
-const GRID_W_CELLS = 28;
-const GRID_H_CELLS = 18;
-
-/* ============================================================
-   SECTION 2: STATE
-   ============================================================ */
-let lang       = localStorage.getItem('snakeLang')     || 'id';
-let curDiff    = 'easy';
-let curStage   = 1;
-let unlocked   = JSON.parse(localStorage.getItem('snakeUnlocked') || '[1]');
-let bestScores = JSON.parse(localStorage.getItem('snakeBest')     || '{}');
-let stageStars = JSON.parse(localStorage.getItem('snakeStars')    || '{}');
-let achievements = JSON.parse(localStorage.getItem('snakeAch')    || '{}');
-
-// Settings
-let dpadSize     = parseInt(localStorage.getItem('snakeDpadSize') || '150');
-let dpadPosition = localStorage.getItem('snakeDpadPos') || 'mid'; // top | mid | bottom
-
-// Game state
-let gameRunning  = false;
-let gamePaused   = false;
-let gameInterval = null;
-let snake        = [];
-let direction    = { x:1, y:0 };
-let nextDir      = { x:1, y:0 };
-let food         = null;
-let score        = 0;
-let foodEaten    = 0;
-let staticWalls  = [];
-let movingObjs   = [];
-let icyBuffer    = [];
-let cellW        = 20;
-let cellH        = 20;
-let colsG        = GRID_W_CELLS;
-let rowsG        = GRID_H_CELLS;
-let noHitCount   = 0;
-let canvas, ctx;
-let particles    = [];
-let foodAnim     = 0;
-
-/* ============================================================
-   SECTION 3: TRANSLATIONS
-   ============================================================ */
-const T = {
-  id: {
-    'menu-title':'Snake Adventure','menu-sub':'Edisi Mobile',
-    'txt-play':'MAIN','txt-bestscore':'SKOR TERBAIK','txt-achievement':'PENCAPAIAN',
-    'txt-settings':'PENGATURAN','txt-language':'BAHASA','txt-about':'TENTANG',
-    'txt-back-diff':'Kembali','txt-choose-diff':'Pilih Kesulitan',
-    'txt-easy':'MUDAH','txt-easy-sub':'Kecepatan Lambat',
-    'txt-normal':'NORMAL','txt-normal-sub':'Kecepatan Sedang',
-    'txt-hard':'SULIT','txt-hard-sub':'Kecepatan Cepat',
-    'txt-extreme':'EKSTREM','txt-extreme-sub':'Kecepatan Maksimal',
-    'txt-back-stage':'Kembali','txt-choose-stage':'Pilih Stage',
-    'txt-best-scores':'Skor Terbaik','txt-achievements':'Pencapaian',
-    'txt-back-bs':'Kembali','txt-back-ach':'Kembali',
-    'txt-select-lang':'Pilih Bahasa','txt-back-lang':'Kembali',
-    'txt-back-about':'Kembali','txt-technology':'Teknologi',
-    'about-version':'Versi 1.1',
-    'about-desc':'Game petualangan ular dengan berbagai stage, rintangan, achievement, dan tingkat kesulitan.',
-    'about-footer':'Dirancang untuk Android · Mode Landscape',
-    'txt-back-settings':'Kembali','txt-settings-title':'Pengaturan',
-    'txt-joystick-size':'Ukuran Joystick','txt-size-label':'Ukuran',
-    'txt-joystick-pos':'Posisi Joystick (vertikal)',
-    'txt-pos-top':'Atas','txt-pos-mid':'Tengah','txt-pos-bottom':'Bawah',
-    'txt-settings-note':'Joystick selalu di kiri. Area game selalu di kanan.',
-    'hud-score-label':'SKOR','hud-stage-label':'STAGE',
-    'hud-best-label':'TERBAIK','hud-diff-label':'LEVEL',
-    'txt-paused':'DIJEDA','txt-resume':'Lanjutkan',
-    'txt-restart':'Mulai Ulang','txt-main-menu':'Menu Utama',
-    'txt-gameover':'GAME OVER','txt-go-score':'Skor','txt-go-best':'Skor Terbaik',
-    'txt-retry':'Coba Lagi','txt-menu-go':'Menu Utama',
-    'txt-stage-clear':'STAGE SELESAI!','txt-sc-score':'Skor','txt-sc-bonus':'Bonus Stage',
-    'txt-next-stage':'Stage Berikutnya','txt-menu-sc':'Menu Utama',
-    'ach-label':'Pencapaian Terbuka!',
-  },
-  en: {
-    'menu-title':'Snake Adventure','menu-sub':'Mobile Edition',
-    'txt-play':'PLAY','txt-bestscore':'BEST SCORE','txt-achievement':'ACHIEVEMENT',
-    'txt-settings':'SETTINGS','txt-language':'LANGUAGE','txt-about':'ABOUT',
-    'txt-back-diff':'Back','txt-choose-diff':'Choose Difficulty',
-    'txt-easy':'EASY','txt-easy-sub':'Slow Speed',
-    'txt-normal':'NORMAL','txt-normal-sub':'Medium Speed',
-    'txt-hard':'HARD','txt-hard-sub':'Fast Speed',
-    'txt-extreme':'EXTREME','txt-extreme-sub':'Max Speed',
-    'txt-back-stage':'Back','txt-choose-stage':'Choose Stage',
-    'txt-best-scores':'Best Scores','txt-achievements':'Achievements',
-    'txt-back-bs':'Back','txt-back-ach':'Back',
-    'txt-select-lang':'Select Language','txt-back-lang':'Back',
-    'txt-back-about':'Back','txt-technology':'Technology',
-    'about-version':'Version 1.1',
-    'about-desc':'A snake adventure game with various stages, obstacles, achievements, and difficulty levels.',
-    'about-footer':'Designed for Android · Landscape Mode',
-    'txt-back-settings':'Back','txt-settings-title':'Settings',
-    'txt-joystick-size':'Joystick Size','txt-size-label':'Size',
-    'txt-joystick-pos':'Joystick Position (vertical)',
-    'txt-pos-top':'Top','txt-pos-mid':'Center','txt-pos-bottom':'Bottom',
-    'txt-settings-note':'Joystick is always on the left. Game area is always on the right.',
-    'hud-score-label':'SCORE','hud-stage-label':'STAGE',
-    'hud-best-label':'BEST','hud-diff-label':'DIFF',
-    'txt-paused':'PAUSED','txt-resume':'Resume',
-    'txt-restart':'Restart','txt-main-menu':'Main Menu',
-    'txt-gameover':'GAME OVER','txt-go-score':'Score','txt-go-best':'Best Score',
-    'txt-retry':'Retry','txt-menu-go':'Main Menu',
-    'txt-stage-clear':'STAGE CLEAR!','txt-sc-score':'Score','txt-sc-bonus':'Stage Bonus',
-    'txt-next-stage':'Next Stage','txt-menu-sc':'Main Menu',
-    'ach-label':'Achievement Unlocked!',
-  }
+const SKILL_DATA = {
+  fireball:  { color: "#ff4500", glow: "#ff8c00", label: "Fireball",     icon: "🔥", desc: "Charge → Launch → Trail → Explosion" },
+  ice_blast: { color: "#00d4ff", glow: "#80e8ff", label: "Ice Blast",    icon: "❄️", desc: "Formation → Shards → Freeze Effect" },
+  thunder:   { color: "#ffe000", glow: "#fff380", label: "Thunder Strike",icon: "⚡", desc: "Lightning Beam → Ground Impact → Electric Particles" },
+  meteor:    { color: "#ff6a00", glow: "#ffa040", label: "Meteor",        icon: "☄️", desc: "Falling Meteor → Ground Crack → Explosion → Debris" },
+  healing:   { color: "#39ff14", glow: "#b0ffb0", label: "Healing",       icon: "✨", desc: "Magic Circle → Light Particles → Recovery" },
 };
 
-function applyLang() {
-  const t = T[lang];
-  for (const id in t) {
-    const el = document.getElementById(id);
-    if (el) el.textContent = t[id];
-  }
-  document.querySelectorAll('.lang-btn').forEach(b => b.classList.toggle('selected', b.dataset.lang === lang));
-}
-function tx(key) { return (T[lang] && T[lang][key]) || T['en'][key] || key; }
-
-/* ============================================================
-   SECTION 4: SETTINGS MANAGEMENT
-   ============================================================ */
-function applyDpadSettings() {
-  // Size
-  document.documentElement.style.setProperty('--dpad-size', dpadSize + 'px');
-  const panel = document.getElementById('dpad-panel');
-  if (panel) {
-    // Panel width = dpadSize + padding
-    panel.style.width = (dpadSize + 24) + 'px';
-  }
-  // Update slider display
-  const slider = document.getElementById('dpad-size-slider');
-  const valEl  = document.getElementById('dpad-size-val');
-  if (slider) slider.value = dpadSize;
-  if (valEl)  valEl.textContent = dpadSize + 'px';
-
-  // Position
-  if (panel) {
-    panel.classList.remove('pos-top','pos-mid','pos-bottom');
-    panel.classList.add('pos-' + dpadPosition);
-  }
-  // Update pos buttons
-  document.querySelectorAll('.pos-btn').forEach(b => b.classList.toggle('active', b.dataset.pos === dpadPosition));
-}
-
-function saveSettings() {
-  localStorage.setItem('snakeDpadSize', dpadSize);
-  localStorage.setItem('snakeDpadPos',  dpadPosition);
-}
-
-/* ============================================================
-   SECTION 5: SCREEN NAVIGATION
-   ============================================================ */
-function showScreen(id) {
-  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-  document.getElementById(id).classList.add('active');
-  playSound('click');
-}
-
-/* ============================================================
-   SECTION 6: BACKGROUND STARS
-   ============================================================ */
-(function initBG() {
-  const bgc = document.getElementById('bg-canvas');
-  const bx  = bgc.getContext('2d');
-  let stars = [];
-
-  function resize() {
-    bgc.width = window.innerWidth; bgc.height = window.innerHeight;
-    stars = [];
-    for (let i = 0; i < 100; i++) {
-      stars.push({ x:Math.random()*bgc.width, y:Math.random()*bgc.height,
-        r:Math.random()*1.4+0.3, a:Math.random(), da:(Math.random()-0.5)*0.012, vx:(Math.random()-0.5)*0.1 });
-    }
-  }
-  function drawBG() {
-    bx.clearRect(0,0,bgc.width,bgc.height);
-    const grad = bx.createLinearGradient(0,0,bgc.width,bgc.height);
-    grad.addColorStop(0,'#040810'); grad.addColorStop(1,'#080420');
-    bx.fillStyle = grad; bx.fillRect(0,0,bgc.width,bgc.height);
-    for (const s of stars) {
-      s.x+=s.vx; s.a+=s.da;
-      if (s.a<0.1) s.da=Math.abs(s.da); if (s.a>1) s.da=-Math.abs(s.da);
-      if (s.x<0) s.x=bgc.width; if (s.x>bgc.width) s.x=0;
-      bx.beginPath(); bx.arc(s.x,s.y,s.r,0,Math.PI*2);
-      bx.fillStyle=`rgba(180,220,255,${s.a})`; bx.fill();
-    }
-    requestAnimationFrame(drawBG);
-  }
-  window.addEventListener('resize', resize); resize(); drawBG();
-})();
-
-/* ============================================================
-   SECTION 7: AUDIO ENGINE
-   ============================================================ */
-const audioCtx = (() => {
-  try { return new (window.AudioContext||window.webkitAudioContext)(); } catch(e) { return null; }
-})();
-
-function playSound(type) {
-  if (!audioCtx) return;
-  try {
-    const osc = audioCtx.createOscillator();
-    const gain = audioCtx.createGain();
-    osc.connect(gain); gain.connect(audioCtx.destination);
-    switch (type) {
-      case 'click':
-        osc.type='sine'; osc.frequency.setValueAtTime(880,audioCtx.currentTime);
-        osc.frequency.exponentialRampToValueAtTime(440,audioCtx.currentTime+0.08);
-        gain.gain.setValueAtTime(0.12,audioCtx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.001,audioCtx.currentTime+0.1);
-        osc.start(audioCtx.currentTime); osc.stop(audioCtx.currentTime+0.1); break;
-      case 'eat':
-        osc.type='square'; osc.frequency.setValueAtTime(523,audioCtx.currentTime);
-        osc.frequency.exponentialRampToValueAtTime(1047,audioCtx.currentTime+0.1);
-        gain.gain.setValueAtTime(0.18,audioCtx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.001,audioCtx.currentTime+0.15);
-        osc.start(audioCtx.currentTime); osc.stop(audioCtx.currentTime+0.15); break;
-      case 'gameover':
-        osc.type='sawtooth'; osc.frequency.setValueAtTime(440,audioCtx.currentTime);
-        osc.frequency.exponentialRampToValueAtTime(110,audioCtx.currentTime+0.5);
-        gain.gain.setValueAtTime(0.25,audioCtx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.001,audioCtx.currentTime+0.5);
-        osc.start(audioCtx.currentTime); osc.stop(audioCtx.currentTime+0.5); break;
-      case 'win':
-        [523,659,784,1047].forEach((freq,i) => {
-          const o2=audioCtx.createOscillator(), g2=audioCtx.createGain();
-          o2.connect(g2); g2.connect(audioCtx.destination); o2.type='sine';
-          o2.frequency.setValueAtTime(freq,audioCtx.currentTime+i*0.1);
-          g2.gain.setValueAtTime(0.18,audioCtx.currentTime+i*0.1);
-          g2.gain.exponentialRampToValueAtTime(0.001,audioCtx.currentTime+i*0.1+0.18);
-          o2.start(audioCtx.currentTime+i*0.1); o2.stop(audioCtx.currentTime+i*0.1+0.2);
-        }); return;
-    }
-  } catch(e) {}
-}
-document.addEventListener('touchstart', () => { if (audioCtx&&audioCtx.state==='suspended') audioCtx.resume(); }, {once:true});
-
-/* ============================================================
-   SECTION 8: STORAGE HELPERS
-   ============================================================ */
-function saveBest()     { localStorage.setItem('snakeBest',     JSON.stringify(bestScores)); }
-function saveUnlocked() { localStorage.setItem('snakeUnlocked', JSON.stringify(unlocked)); }
-function saveStars()    { localStorage.setItem('snakeStars',    JSON.stringify(stageStars)); }
-function saveAch()      { localStorage.setItem('snakeAch',      JSON.stringify(achievements)); }
-
-function getBest(diff,stage)     { return bestScores[`${diff}_${stage}`] || 0; }
-function setBest(diff,stage,val) { const k=`${diff}_${stage}`; if(val>(bestScores[k]||0)){bestScores[k]=val;saveBest();} }
-function getStars(diff,stage)    { return stageStars[`${diff}_${stage}`] || 0; }
-function setStars(diff,stage,val){ const k=`${diff}_${stage}`; if(val>(stageStars[k]||0)){stageStars[k]=val;saveStars();} }
-
-/* ============================================================
-   SECTION 9: ACHIEVEMENTS
-   ============================================================ */
-const ACH_DEF = [
-  { id:'first_apple',     icon:'🥇', name:{id:'Apel Pertama',   en:'First Apple'     }, desc:{id:'Makan makanan pertama',    en:'Eat the first food'  } },
-  { id:'snake_master',    icon:'🥈', name:{id:'Master Ular',    en:'Snake Master'    }, desc:{id:'Raih skor 1000',           en:'Reach 1000 score'    } },
-  { id:'stage_conqueror', icon:'🥉', name:{id:'Penakluk Stage', en:'Stage Conqueror' }, desc:{id:'Selesaikan semua stage',   en:'Complete all stages' } },
-  { id:'legend_snake',    icon:'👑', name:{id:'Legenda Ular',   en:'Legend Snake'    }, desc:{id:'Raih semua bintang',       en:'Get all stars'       } },
+const ENEMY_DATA = [
+  { id: "goblin",  label: "Goblin",      color: "#3f8c3f", size: 32 },
+  { id: "orc",     label: "Orc Warrior", color: "#6b3a1f", size: 48 },
+  { id: "slime",   label: "Slime",       color: "#1fa04a", size: 28 },
+  { id: "skeleton",label: "Skeleton",    color: "#c8bfa0", size: 36 },
+  { id: "bat",     label: "Bat",         color: "#4a2070", size: 24 },
 ];
 
-function unlockAch(id) {
-  if (achievements[id]) return;
-  achievements[id] = true; saveAch();
-  const def = ACH_DEF.find(a => a.id === id);
-  if (def) showAchPopup(def);
-}
-function checkAchievements() {
-  if (unlocked.length >= 7) unlockAch('stage_conqueror');
-  let legendOk = true;
-  for (const d of ['easy','normal','hard','extreme']) {
-    for (let s=1; s<=6; s++) { if (getStars(d,s)<3){legendOk=false;break;} }
-    if (!legendOk) break;
-  }
-  if (legendOk) unlockAch('legend_snake');
-}
-function showAchPopup(def) {
-  document.getElementById('ach-popup-icon').textContent = def.icon;
-  document.getElementById('ach-popup-label').textContent = tx('ach-label');
-  document.getElementById('ach-popup-name').textContent = def.name[lang]||def.name.en;
-  const pop = document.getElementById('ach-popup');
-  pop.classList.add('show');
-  setTimeout(() => pop.classList.remove('show'), 3500);
-}
-function renderAchList() {
-  const list = document.getElementById('ach-list'); list.innerHTML='';
-  for (const def of ACH_DEF) {
-    const earned = !!achievements[def.id];
-    const div = document.createElement('div');
-    div.className = 'ach-item'+(earned?' earned':'');
-    div.innerHTML=`<div class="ach-icon">${def.icon}</div><div class="ach-info"><div class="ach-name">${def.name[lang]||def.name.en}</div><div class="ach-desc">${def.desc[lang]||def.desc.en}</div></div><div class="ach-badge">${earned?'✅':'🔒'}</div>`;
-    list.appendChild(div);
-  }
-}
+const BOSS_DATA = [
+  { id: "dragon",   label: "Ancient Dragon", color: "#c0392b", size: 80 },
+  { id: "lich",     label: "Lich King",      color: "#8e44ad", size: 70 },
+  { id: "titan",    label: "Stone Titan",    color: "#7f8c8d", size: 90 },
+];
 
-/* ============================================================
-   SECTION 10: STAGE SELECT
-   ============================================================ */
-function renderStages() {
-  const grid = document.getElementById('stage-grid'); grid.innerHTML='';
-  for (let i=0; i<STAGES.length; i++) {
-    const st=STAGES[i], isOpen=unlocked.includes(st.id), stars=getStars(curDiff,st.id);
-    const card=document.createElement('div');
-    card.className=`stage-card ${isOpen?'unlocked':'locked'}`;
-    card.innerHTML=`<div class="stage-icon">${isOpen?st.icon:'🔒'}</div><div class="stage-name">${st.name[lang]||st.name.en}</div><div class="stage-num">Stage ${st.id}</div><div class="stage-stars">${'⭐'.repeat(stars)}${'☆'.repeat(3-stars)}</div>`;
-    if (isOpen) card.addEventListener('click', () => { curStage=st.id; startGame(); });
-    grid.appendChild(card);
-  }
-}
+const TABS = ["🌍 World", "🧝 Player", "✨ Skills", "👾 Enemies", "🐉 Bosses", "🐾 NPCs & Pets", "🌿 World & UI", "💥 FX Showcase"];
 
-/* ============================================================
-   SECTION 11: BEST SCORE SCREEN
-   ============================================================ */
-let scoreDiffFilter = 'easy';
-function renderBestScores() {
-  const wrap = document.getElementById('score-table-wrap');
-  let html=`<table class="score-table"><thead><tr><th>Stage</th><th>Name</th><th>Score</th><th>Stars</th></tr></thead><tbody>`;
-  for (let s=1;s<=6;s++) {
-    const st=STAGES[s-1], sc=getBest(scoreDiffFilter,s), st2=getStars(scoreDiffFilter,s);
-    html+=`<tr><td>${st.icon} ${s}</td><td style="font-size:10px">${st.name[lang]||st.name.en}</td><td class="score-val">${sc}</td><td>${'⭐'.repeat(st2)}${'☆'.repeat(3-st2)}</td></tr>`;
-  }
-  html+='</tbody></table>';
-  wrap.innerHTML=html;
-  document.querySelectorAll('.score-tab').forEach(t => t.classList.toggle('active', t.dataset.diff===scoreDiffFilter));
-}
-
-/* ============================================================
-   SECTION 12: GAME INITIALIZATION
-   ============================================================ */
-function startGame() {
-  showScreen('screen-game');
-  if (audioCtx&&audioCtx.state==='suspended') audioCtx.resume();
-
-  canvas = document.getElementById('game-canvas');
-  ctx    = canvas.getContext('2d');
-
-  applyDpadSettings(); // ensure panel width matches dpad size
-  resizeCanvas();
-
-  score=0; foodEaten=0; noHitCount=0; particles=[]; icyBuffer=[];
-  direction={x:1,y:0}; nextDir={x:1,y:0};
-
-  initSnake(); generateObstacles(); spawnFood(); updateHUD(); hideAllOverlays();
-  gameRunning=true; gamePaused=false;
-  if (gameInterval) clearInterval(gameInterval);
-  gameInterval = setInterval(gameLoop, DIFFICULTY[curDiff].speed);
-  requestAnimationFrame(renderLoop);
-}
-
-function resizeCanvas() {
-  const container = document.getElementById('game-container');
-  const W = container.clientWidth;
-  const H = container.clientHeight;
-  if (W<=0||H<=0) return;
-  const cellW2 = Math.floor(W / GRID_W_CELLS);
-  const cellH2 = Math.floor(H / GRID_H_CELLS);
-  const cell   = Math.min(cellW2, cellH2);
-  cellW = cell; cellH = cell;
-  colsG = Math.floor(W / cell);
-  rowsG = Math.floor(H / cell);
-  canvas.width  = colsG * cell;
-  canvas.height = rowsG * cell;
-}
-
-function initSnake() {
-  const sx=Math.floor(colsG/4), sy=Math.floor(rowsG/2);
-  snake=[{x:sx,y:sy},{x:sx-1,y:sy},{x:sx-2,y:sy}];
-}
-
-/* ============================================================
-   SECTION 13: OBSTACLES
-   ============================================================ */
-function generateObstacles() {
-  staticWalls=[]; movingObjs=[];
-  if (curStage===2||curStage===6) {
-    const patterns=[
-      ...rangeY(4,12,4),...rangeY(18,26,4),
-      ...rangeX(8,6,12),...rangeX(22,8,14),
-      ...rangeY(5,13,rowsG-5),...rangeY(17,25,rowsG-5),
-    ].filter(p=>inBounds(p.x,p.y));
-    staticWalls.push(...patterns);
-  }
-  if (curStage===3||curStage===6) {
-    for (let i=0;i<6;i++) movingObjs.push({x:rndInt(2,colsG-3),y:rndInt(2,rowsG-3),dx:Math.random()<0.5?1:-1,dy:0,timer:0,type:'rock',color:'#C4A35A'});
-  }
-  if (curStage===5||curStage===6) {
-    for (let i=0;i<5;i++) movingObjs.push({x:rndInt(3,colsG-4),y:rndInt(3,rowsG-4),dx:0,dy:Math.random()<0.5?1:-1,timer:0,type:'lava',color:'#FF4500'});
-  }
-}
-function rangeY(xa,xb,y) { const r=[]; for(let x=xa;x<=xb;x++) r.push({x,y}); return r; }
-function rangeX(x,ya,yb) { const r=[]; for(let y=ya;y<=yb;y++) r.push({x,y}); return r; }
-function rndInt(a,b) { return Math.floor(Math.random()*(b-a+1))+a; }
-function inBounds(x,y) { return x>=0&&x<colsG&&y>=0&&y<rowsG; }
-
-/* ============================================================
-   SECTION 14: FOOD SPAWNING
-   ============================================================ */
-function spawnFood() {
-  let tries=0;
-  do {
-    food={x:rndInt(0,colsG-1),y:rndInt(0,rowsG-1)};
-    tries++;
-  } while(tries<500&&(
-    snake.some(s=>s.x===food.x&&s.y===food.y)||
-    staticWalls.some(w=>w.x===food.x&&w.y===food.y)||
-    movingObjs.some(o=>o.x===food.x&&o.y===food.y)
-  ));
-}
-
-/* ============================================================
-   SECTION 15: GAME LOOP
-   ============================================================ */
-function gameLoop() {
-  if (!gameRunning||gamePaused) return;
-  const stageData=STAGES[curStage-1];
-  moveObstacles();
-  if (stageData.icy) {
-    icyBuffer.push({...nextDir});
-    if (icyBuffer.length>2) icyBuffer.shift();
-    direction=icyBuffer[0]||direction;
-  } else {
-    direction={...nextDir};
-  }
-  moveSnake();
-}
-
-function moveObstacles() {
-  for (const obj of movingObjs) {
-    obj.timer++;
-    if (obj.timer>=3) {
-      obj.timer=0;
-      let nx=obj.x+obj.dx, ny=obj.y+obj.dy;
-      if (nx<1||nx>=colsG-1){obj.dx=-obj.dx;nx=obj.x+obj.dx;}
-      if (ny<1||ny>=rowsG-1){obj.dy=-obj.dy;ny=obj.y+obj.dy;}
-      if (Math.random()<0.05) {
-        if (obj.type==='rock'){obj.dx=Math.random()<0.5?1:-1;obj.dy=0;}
-        if (obj.type==='lava'){obj.dy=Math.random()<0.5?1:-1;obj.dx=0;}
-      }
-      obj.x=nx; obj.y=ny;
-    }
-  }
-}
-
-function moveSnake() {
-  const head=snake[0];
-  const newH={x:head.x+direction.x,y:head.y+direction.y};
-  if (newH.x<0||newH.x>=colsG||newH.y<0||newH.y>=rowsG){triggerGameOver();return;}
-  if (snake.slice(0,snake.length-1).some(s=>s.x===newH.x&&s.y===newH.y)){triggerGameOver();return;}
-  if (staticWalls.some(w=>w.x===newH.x&&w.y===newH.y)){triggerGameOver();return;}
-  for (const obj of movingObjs) { if (obj.x===newH.x&&obj.y===newH.y){triggerGameOver();return;} }
-
-  snake.unshift(newH);
-  if (food&&newH.x===food.x&&newH.y===food.y) {
-    const pts=10+DIFFICULTY[curDiff].bonus;
-    score+=pts; foodEaten++; noHitCount++;
-    spawnParticles(newH.x*cellW+cellW/2, newH.y*cellH+cellH/2,'#00e5ff',10);
-    playSound('eat');
-    if (!achievements['first_apple']) unlockAch('first_apple');
-    if (score>=1000&&!achievements['snake_master']) unlockAch('snake_master');
-    updateHUD();
-    if (foodEaten>=STAGES[curStage-1].target){stageClear();return;}
-    spawnFood();
-  } else {
-    snake.pop();
-  }
-  updateHUD();
-}
-
-/* ============================================================
-   SECTION 16: STAGE CLEAR & GAME OVER
-   ============================================================ */
-function stageClear() {
-  gameRunning=false; clearInterval(gameInterval); playSound('win');
-  const stageBonus=curStage*100; score+=stageBonus;
-  const target=STAGES[curStage-1].target;
-  let starCount=1;
-  if (noHitCount===foodEaten) starCount=2;
-  const maxPossible=target*(10+DIFFICULTY[curDiff].bonus)+stageBonus;
-  if (score>=maxPossible*0.85&&noHitCount===foodEaten) starCount=3;
-  setStars(curDiff,curStage,starCount); setBest(curDiff,curStage,score);
-  const nextId=curStage+1;
-  if (nextId<=6&&!unlocked.includes(nextId)){unlocked.push(nextId);saveUnlocked();}
-  if (curStage===6&&!unlocked.includes(7)){unlocked.push(7);saveUnlocked();}
-  checkAchievements();
-  document.getElementById('stage-stars-display').textContent='⭐'.repeat(starCount)+'☆'.repeat(3-starCount);
-  document.getElementById('sc-score').textContent=score;
-  document.getElementById('sc-bonus').textContent='+'+stageBonus;
-  document.getElementById('overlay-stageclear').classList.add('visible');
-  const nb=document.getElementById('btn-next-stage');
-  nb.disabled=curStage>=6; nb.style.opacity=curStage>=6?'0.4':'1';
-}
-
-function triggerGameOver() {
-  gameRunning=false; clearInterval(gameInterval); playSound('gameover');
-  setBest(curDiff,curStage,score);
-  document.getElementById('go-score').textContent=score;
-  document.getElementById('go-best').textContent=getBest(curDiff,curStage);
-  document.getElementById('overlay-gameover').classList.add('visible');
-}
-
-function hideAllOverlays() {
-  document.getElementById('overlay-pause').classList.remove('visible');
-  document.getElementById('overlay-gameover').classList.remove('visible');
-  document.getElementById('overlay-stageclear').classList.remove('visible');
-}
-
-function pauseGame() {
-  if (!gameRunning) return;
-  gamePaused=true; clearInterval(gameInterval);
-  document.getElementById('overlay-pause').classList.add('visible');
-}
-function resumeGame() {
-  if (!gameRunning) return;
-  gamePaused=false; hideAllOverlays();
-  gameInterval=setInterval(gameLoop, DIFFICULTY[curDiff].speed);
-}
-
-/* ============================================================
-   SECTION 17: HUD UPDATE
-   ============================================================ */
-function updateHUD() {
-  const target=STAGES[curStage-1].target;
-  document.getElementById('hud-score').textContent=score;
-  document.getElementById('hud-stage').textContent=curStage;
-  document.getElementById('hud-best').textContent=getBest(curDiff,curStage);
-  document.getElementById('hud-diff').textContent=DIFFICULTY[curDiff].label[lang]||DIFFICULTY[curDiff].label.en;
-  const pct=(foodEaten/target)*100;
-  document.getElementById('hud-progress-fill').style.width=pct+'%';
-  document.getElementById('hud-progress-label').textContent=`${foodEaten} / ${target}`;
-}
-
-/* ============================================================
-   SECTION 18: RENDER LOOP
-   ============================================================ */
-function renderLoop() {
-  if (!canvas||!ctx){requestAnimationFrame(renderLoop);return;}
-  foodAnim=(foodAnim+0.08)%(Math.PI*2);
-  draw();
-  requestAnimationFrame(renderLoop);
-}
-
-function draw() {
-  const stageData=STAGES[curStage-1];
-  const W=canvas.width, H=canvas.height;
-  const grad=ctx.createLinearGradient(0,0,W,H);
-  grad.addColorStop(0,stageData.color[0]); grad.addColorStop(1,stageData.color[1]);
-  ctx.fillStyle=grad; ctx.fillRect(0,0,W,H);
-
-  ctx.strokeStyle='rgba(255,255,255,0.03)'; ctx.lineWidth=0.5;
-  for (let x=0;x<=colsG;x++){ctx.beginPath();ctx.moveTo(x*cellW,0);ctx.lineTo(x*cellW,H);ctx.stroke();}
-  for (let y=0;y<=rowsG;y++){ctx.beginPath();ctx.moveTo(0,y*cellH);ctx.lineTo(W,y*cellH);ctx.stroke();}
-
-  for (const w of staticWalls) drawCell(w.x,w.y,stageData.wallColor||'#888',0.9,4);
-  for (const obj of movingObjs) drawCell(obj.x,obj.y,obj.color,0.85,5,obj.type==='lava'?'rgba(255,100,0,0.4)':null);
-
-  if (food) {
-    const pulse=Math.sin(foodAnim)*0.12+1;
-    const fx=food.x*cellW+cellW/2, fy=food.y*cellH+cellH/2, fr=(cellW/2-2)*pulse;
-    ctx.save();
-    ctx.beginPath(); ctx.arc(fx,fy,fr+5,0,Math.PI*2);
-    const glowGrad=ctx.createRadialGradient(fx,fy,0,fx,fy,fr+5);
-    glowGrad.addColorStop(0,'rgba(255,100,50,0.7)'); glowGrad.addColorStop(1,'rgba(255,100,50,0)');
-    ctx.fillStyle=glowGrad; ctx.fill(); ctx.restore();
-    ctx.save();
-    ctx.beginPath(); ctx.arc(fx,fy,fr,0,Math.PI*2);
-    const foodGrad=ctx.createRadialGradient(fx-fr*0.3,fy-fr*0.3,fr*0.1,fx,fy,fr);
-    foodGrad.addColorStop(0,'#ff6b6b'); foodGrad.addColorStop(1,'#c0392b');
-    ctx.fillStyle=foodGrad; ctx.fill(); ctx.restore();
-    ctx.save(); ctx.strokeStyle='#2ecc71'; ctx.lineWidth=2;
-    ctx.beginPath(); ctx.moveTo(fx,fy-fr);
-    ctx.quadraticCurveTo(fx+fr*0.5,fy-fr*1.5,fx+fr,fy-fr*1.2); ctx.stroke(); ctx.restore();
-  }
-
-  for (let i=0;i<snake.length;i++) {
-    const seg=snake[i], isHead=i===0, t=1-i/(snake.length+1);
-    if (isHead) drawSnakeHead(seg.x,seg.y);
-    else { const bodyColor=`hsl(${120+i*2},${70+t*20}%,${30+t*20}%)`; drawCell(seg.x,seg.y,bodyColor,0.92,5); }
-  }
-  drawParticles();
-}
-
-function drawCell(cx,cy,color,alpha,radius,glowColor) {
-  const x=cx*cellW+1, y=cy*cellH+1, w=cellW-2, h=cellH-2;
-  ctx.save(); ctx.globalAlpha=alpha||1;
-  if (glowColor){ctx.shadowColor=glowColor;ctx.shadowBlur=10;}
-  ctx.fillStyle=color; roundRect(ctx,x,y,w,h,radius||4); ctx.fill(); ctx.restore();
-}
-
-function drawSnakeHead(cx,cy) {
-  const x=cx*cellW+1,y=cy*cellH+1,w=cellW-2,h=cellH-2;
-  ctx.save(); ctx.shadowColor='rgba(0,229,255,0.6)'; ctx.shadowBlur=12;
-  const headGrad=ctx.createLinearGradient(x,y,x+w,y+h);
-  headGrad.addColorStop(0,'#00e5ff'); headGrad.addColorStop(1,'#0090aa');
-  ctx.fillStyle=headGrad; roundRect(ctx,x,y,w,h,6); ctx.fill(); ctx.restore();
+// ============================================================
+// PIXEL HERO RENDERER
+// ============================================================
+function drawPixelHero(ctx, x, y, scale, dir, frame, state) {
   ctx.save();
-  const eyeR=Math.max(2,cellW/7);
-  const e1x=x+w*0.3, e1y=y+h*0.3, e2x=x+w*0.7, e2y=y+h*0.7;
-  ctx.fillStyle='#fff';
-  ctx.beginPath();ctx.arc(e1x,e1y,eyeR,0,Math.PI*2);ctx.fill();
-  ctx.beginPath();ctx.arc(e2x,e2y,eyeR,0,Math.PI*2);ctx.fill();
-  ctx.fillStyle='#000';
-  ctx.beginPath();ctx.arc(e1x,e1y,eyeR*0.55,0,Math.PI*2);ctx.fill();
-  ctx.beginPath();ctx.arc(e2x,e2y,eyeR*0.55,0,Math.PI*2);ctx.fill();
+  ctx.translate(x, y);
+  ctx.scale(scale, scale);
+
+  const skin = "#f5c5a0";
+  const hair = "#4a2c0a";
+  const armor = state === "hurt" || state === "knockback" ? "#ff4444" :
+                state === "death" ? "#555" :
+                state === "victory" ? "#f5a623" :
+                state.includes("skill") || state.includes("ult") ? "#b060ff" :
+                state.includes("attack") ? "#ff6644" : "#4a90d9";
+  const boot = "#2c1810";
+  const cape = state.includes("ult") ? "#ff2080" : "#8c1f1f";
+
+  const bob = Math.sin(frame * 0.8) * (state.includes("walk") ? 2 : state.includes("run") ? 3 : 0.5);
+
+  ctx.save();
+  ctx.translate(0, bob);
+
+  // Cape
+  ctx.fillStyle = cape;
+  ctx.beginPath();
+  ctx.ellipse(0, 4, 5, 8 + Math.sin(frame * 0.4) * 2, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Legs
+  const legSwing = state.includes("walk") || state.includes("run") ? Math.sin(frame * 1.4) * (state.includes("run") ? 6 : 4) : 0;
+  ctx.fillStyle = armor;
+  ctx.fillRect(-5 - legSwing * 0.3, 10, 4, 8);
+  ctx.fillRect(1 + legSwing * 0.3, 10, 4, 8);
+  ctx.fillStyle = boot;
+  ctx.fillRect(-6 - legSwing * 0.3, 16, 5, 4);
+  ctx.fillRect(0 + legSwing * 0.3, 16, 5, 4);
+
+  // Body
+  ctx.fillStyle = armor;
+  ctx.fillRect(-6, 2, 12, 10);
+
+  // Arms
+  const armSwing = state.includes("walk") || state.includes("run") ? Math.cos(frame * 1.4) * 5 : 0;
+  const attackArm = state.includes("attack") ? Math.sin(frame * 2) * 15 - 10 : 0;
+  ctx.fillStyle = armor;
+  ctx.fillRect(-10, 2 + armSwing + attackArm, 4, 6);
+  ctx.fillRect(6, 2 - armSwing + attackArm, 4, 6);
+
+  // Glow if casting
+  if (state.includes("skill") || state.includes("ult") || state === "victory") {
+    ctx.save();
+    const glowColor = state.includes("ult") ? "#ff00ff" : state === "victory" ? "#ffd700" : "#a060ff";
+    ctx.shadowColor = glowColor;
+    ctx.shadowBlur = 20 + Math.sin(frame * 0.5) * 10;
+    ctx.fillStyle = glowColor;
+    ctx.globalAlpha = 0.3;
+    ctx.beginPath();
+    ctx.arc(0, 6, 14, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  // Head
+  ctx.fillStyle = skin;
+  ctx.beginPath();
+  ctx.arc(0, -4, 6, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Hair
+  ctx.fillStyle = hair;
+  ctx.fillRect(-6, -9, 12, 5);
+  ctx.beginPath();
+  ctx.arc(0, -9, 5, Math.PI, 0);
+  ctx.fill();
+
+  // Eyes
+  ctx.fillStyle = "#222";
+  if (dir !== "up") {
+    const eyeY = state === "hurt" || state === "death" ? -2 : -4;
+    ctx.fillRect(-3, eyeY, 2, state === "hurt" ? 1 : 2);
+    ctx.fillRect(1, eyeY, 2, state === "hurt" ? 1 : 2);
+  }
+
+  // Weapon for attack
+  if (state.includes("attack") || state === "dash") {
+    ctx.save();
+    ctx.rotate(attackArm * 0.05 - 0.3);
+    ctx.fillStyle = "#c0c0c0";
+    ctx.fillRect(8, -6, 3, 16);
+    ctx.fillStyle = "#f5a623";
+    ctx.fillRect(6, -2, 7, 2);
+    ctx.restore();
+  }
+
+  ctx.restore();
   ctx.restore();
 }
 
-function roundRect(ctx2,x,y,w,h,r){
-  ctx2.beginPath();ctx2.moveTo(x+r,y);ctx2.lineTo(x+w-r,y);ctx2.arcTo(x+w,y,x+w,y+r,r);
-  ctx2.lineTo(x+w,y+h-r);ctx2.arcTo(x+w,y+h,x+w-r,y+h,r);ctx2.lineTo(x+r,y+h);
-  ctx2.arcTo(x,y+h,x,y+h-r,r);ctx2.lineTo(x,y+r);ctx2.arcTo(x,y,x+r,y,r);ctx2.closePath();
+// ============================================================
+// WORLD GAMEPLAY COMPONENT
+// ============================================================
+function WorldGameplay({ onAnimationChange }) {
+  const canvasRef = useRef(null);
+  const playerPos = useRef({ x: 400, y: 200 });
+  const playerDir = useRef("down");
+  const playerState = useRef("idle_down");
+  const frameRef = useRef(0);
+  const keys = useRef({});
+  const running = useRef(false);
+  const attacking = useRef(false);
+  const animRef = useRef(null);
+  const enemiesRef = useRef([
+    { id: "gob1", type: "goblin", x: 200, y: 150, hp: 30 },
+    { id: "slime1", type: "slime", x: 550, y: 200, hp: 20 },
+    { id: "bat1", type: "bat", x: 650, y: 100, hp: 15 },
+    { id: "orc1", type: "orc", x: 350, y: 300, hp: 50 },
+    { id: "skel1", type: "skeleton", x: 700, y: 280, hp: 25 },
+  ]);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+
+    const handleKeyDown = (e) => {
+      keys.current[e.key] = true;
+      if (e.key === " " || e.key === "Spacebar") {
+        e.preventDefault();
+        if (!attacking.current) {
+          attacking.current = true;
+          playerState.current = "attack1";
+          onAnimationChange && onAnimationChange("attack1");
+          setTimeout(() => {
+            attacking.current = false;
+          }, 400);
+        }
+      }
+      if (e.key === "r" || e.key === "R") {
+        running.current = !running.current;
+      }
+    };
+    const handleKeyUp = (e) => { keys.current[e.key] = false; };
+    window.addEventListener("keydown", handleKeyDown);
+    window.addEventListener("keyup", handleKeyUp);
+
+    const gameLoop = () => {
+      const k = keys.current;
+      let dx = 0, dy = 0;
+      if (k["ArrowUp"] || k["w"]) dy -= 1;
+      if (k["ArrowDown"] || k["s"]) dy += 1;
+      if (k["ArrowLeft"] || k["a"]) dx -= 1;
+      if (k["ArrowRight"] || k["d"]) dx += 1;
+      
+      const speed = 2.5 * (running.current ? 1.8 : 1);
+      if (dx !== 0 || dy !== 0) {
+        const len = Math.sqrt(dx*dx+dy*dy);
+        dx /= len; dy /= len;
+        playerPos.current.x += dx * speed;
+        playerPos.current.y += dy * speed;
+        playerPos.current.x = Math.max(30, Math.min(870, playerPos.current.x));
+        playerPos.current.y = Math.max(30, Math.min(370, playerPos.current.y));
+        
+        if (!attacking.current) {
+          if (Math.abs(dx) > Math.abs(dy)) playerDir.current = dx > 0 ? "right" : "left";
+          else playerDir.current = dy > 0 ? "down" : "up";
+          const base = running.current ? "run" : "walk";
+          const newState = `${base}_${playerDir.current}`;
+          playerState.current = newState;
+          onAnimationChange && onAnimationChange(newState);
+        }
+      } else {
+        if (!attacking.current) {
+          const newState = `idle_${playerDir.current}`;
+          playerState.current = newState;
+          onAnimationChange && onAnimationChange(newState);
+        }
+      }
+
+      // Draw world
+      ctx.clearRect(0, 0, 900, 400);
+      
+      // Sky gradient
+      const skyGrad = ctx.createLinearGradient(0, 0, 0, 400);
+      skyGrad.addColorStop(0, "#1a2a4a");
+      skyGrad.addColorStop(0.6, "#2a4a3a");
+      skyGrad.addColorStop(1, "#1a3a1a");
+      ctx.fillStyle = skyGrad;
+      ctx.fillRect(0, 0, 900, 400);
+
+      // Ground
+      ctx.fillStyle = "#2a5a2a";
+      ctx.fillRect(0, 320, 900, 80);
+      ctx.fillStyle = "#1a4a1a";
+      ctx.fillRect(0, 340, 900, 60);
+
+      // Path
+      ctx.fillStyle = "#8a7a5a";
+      ctx.beginPath();
+      ctx.moveTo(0, 350);
+      ctx.quadraticCurveTo(450, 300, 900, 340);
+      ctx.lineTo(900, 370);
+      ctx.quadraticCurveTo(450, 330, 0, 380);
+      ctx.closePath();
+      ctx.fill();
+
+      // Trees
+      [80, 250, 450, 650, 820].forEach((tx, i) => {
+        const ty = 260 + Math.sin(i * 1.5) * 30;
+        ctx.fillStyle = "#3a2a1a";
+        ctx.fillRect(tx - 4, ty, 8, 50);
+        ctx.fillStyle = "#1a5a1a";
+        ctx.beginPath();
+        ctx.arc(tx, ty - 10, 22, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = "#2a7a2a";
+        ctx.beginPath();
+        ctx.arc(tx, ty - 20, 16, 0, Math.PI * 2);
+        ctx.fill();
+      });
+
+      // Rocks
+      ctx.fillStyle = "#6a6a6a";
+      [150, 500, 750].forEach(rx => {
+        ctx.beginPath();
+        ctx.ellipse(rx, 330, 15, 8, 0, 0, Math.PI * 2);
+        ctx.fill();
+      });
+
+      // Draw enemies
+      enemiesRef.current.forEach(enemy => {
+        const data = ENEMY_DATA.find(e => e.id === enemy.type) || ENEMY_DATA[0];
+        const bob = Math.sin(frameRef.current * 0.05 + enemy.x) * 2;
+        
+        // Shadow
+        ctx.fillStyle = "rgba(0,0,0,0.3)";
+        ctx.beginPath();
+        ctx.ellipse(enemy.x, enemy.y + data.size/2 + 2, data.size/2, 4, 0, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Body
+        ctx.fillStyle = data.color;
+        ctx.shadowColor = data.color;
+        ctx.shadowBlur = 8;
+        ctx.beginPath();
+        if (enemy.type === "slime") {
+          ctx.arc(enemy.x, enemy.y + bob, data.size/2, 0, Math.PI * 2);
+        } else if (enemy.type === "bat") {
+          const wingFlap = Math.sin(frameRef.current * 0.1 + enemy.x) * 8;
+          ctx.arc(enemy.x, enemy.y + bob, data.size/3, 0, Math.PI * 2);
+          ctx.beginPath();
+          ctx.ellipse(enemy.x - 10, enemy.y - 5 + wingFlap, 12, 6, -0.3, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.beginPath();
+          ctx.ellipse(enemy.x + 10, enemy.y - 5 - wingFlap, 12, 6, 0.3, 0, Math.PI * 2);
+        } else {
+          ctx.rect(enemy.x - data.size/3, enemy.y - data.size/2 + bob, data.size*2/3, data.size/2);
+          ctx.beginPath();
+          ctx.arc(enemy.x, enemy.y - data.size/2 + bob, data.size/3, 0, Math.PI * 2);
+        }
+        ctx.fill();
+        ctx.shadowBlur = 0;
+        
+        // HP bar
+        ctx.fillStyle = "rgba(0,0,0,0.6)";
+        ctx.fillRect(enemy.x - 15, enemy.y - data.size/2 - 15, 30, 4);
+        ctx.fillStyle = enemy.hp > 20 ? "#39ff14" : enemy.hp > 10 ? "#ffaa00" : "#ff2244";
+        ctx.fillRect(enemy.x - 15, enemy.y - data.size/2 - 15, 30 * (enemy.hp / 50), 4);
+      });
+
+      // Draw player
+      drawPixelHero(ctx, playerPos.current.x, playerPos.current.y, 2.0, playerDir.current, frameRef.current * 0.3, playerState.current);
+      
+      frameRef.current++;
+      animRef.current = requestAnimationFrame(gameLoop);
+    };
+    animRef.current = requestAnimationFrame(gameLoop);
+    
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("keyup", handleKeyUp);
+      cancelAnimationFrame(animRef.current);
+    };
+  }, []);
+
+  return <canvas ref={canvasRef} id="worldCanvas" width={900} height={400} style={{ width: "100%", height: "100%" }} />;
 }
 
-/* ============================================================
-   SECTION 19: PARTICLES
-   ============================================================ */
-function spawnParticles(px,py,color,count) {
-  for (let i=0;i<count;i++) {
-    const angle=Math.random()*Math.PI*2, speed=Math.random()*60+30;
-    particles.push({x:px,y:py,vx:Math.cos(angle)*speed,vy:Math.sin(angle)*speed,r:Math.random()*4+2,life:1,color:color||'#00e5ff'});
-  }
+// ============================================================
+// SKILL EFFECT CANVAS
+// ============================================================
+function SkillCanvas({ skill, playing }) {
+  const canvasRef = useRef(null);
+  const particlesRef = useRef([]);
+  const rafRef = useRef(null);
+
+  const spawnParticle = useCallback((cfg) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const cx = cfg.cx ?? canvas.width / 2;
+    const cy = cfg.cy ?? canvas.height / 2;
+    const count = cfg.count ?? 20;
+    for (let i = 0; i < count; i++) {
+      const angle = (Math.PI * 2 * i) / count + (Math.random() - 0.5) * 0.5;
+      const speed = cfg.speed ?? (1 + Math.random() * 3);
+      particlesRef.current.push({
+        x: cx + (Math.random() - 0.5) * (cfg.spread ?? 10),
+        y: cy + (Math.random() - 0.5) * (cfg.spread ?? 10),
+        vx: Math.cos(angle) * speed * (0.5 + Math.random()),
+        vy: Math.sin(angle) * speed * (0.5 + Math.random()),
+        life: 1,
+        decay: 0.015 + Math.random() * 0.025,
+        size: (cfg.minSize ?? 2) + Math.random() * (cfg.maxSize ?? 4),
+        color: cfg.colors ? cfg.colors[Math.floor(Math.random() * cfg.colors.length)] : "#fff",
+        gravity: cfg.gravity ?? 0.05,
+      });
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!playing) return;
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    const cx = canvas.width / 2;
+    const cy = canvas.height / 2;
+    let tick = 0;
+
+    const configs = {
+      fireball: [
+        { t: 0,  fn: () => spawnParticle({ cx, cy: cy+20, count: 8, colors: ["#ff4500","#ff8c00","#ffcc00"], spread: 5, speed: 0.5, minSize: 3, maxSize: 6 }) },
+        { t: 20, fn: () => spawnParticle({ cx: cx-40, cy, count: 30, colors: ["#ff4500","#ff6a00","#ffcc00","#fff"], spread: 3, speed: 4, gravity: -0.02, minSize: 2, maxSize: 5 }) },
+        { t: 50, fn: () => spawnParticle({ cx, cy, count: 60, colors: ["#ff2200","#ff6a00","#ffcc00","#fff","#ff4500"], spread: 20, speed: 5, gravity: 0.08, minSize: 3, maxSize: 8 }) },
+      ],
+      ice_blast: [
+        { t: 0,  fn: () => spawnParticle({ cx, cy, count: 15, colors: ["#00d4ff","#80e8ff","#ffffff"], spread: 8, speed: 0.8, gravity: -0.01, minSize: 2, maxSize: 4 }) },
+        { t: 25, fn: () => spawnParticle({ cx, cy, count: 40, colors: ["#00d4ff","#80e8ff","#b0f4ff","#ffffff"], spread: 30, speed: 4, gravity: 0.03, minSize: 1, maxSize: 3 }) },
+      ],
+      thunder: [
+        { t: 0,  fn: () => spawnParticle({ cx, cy: cy-60, count: 5, colors: ["#ffe000","#fff380","#ffffff"], spread: 3, speed: 1, gravity: 0.2, minSize: 2, maxSize: 3 }) },
+        { t: 15, fn: () => spawnParticle({ cx, cy, count: 50, colors: ["#ffe000","#fff380","#ffffff","#aaaaff"], spread: 5, speed: 6, gravity: 0.1, minSize: 1, maxSize: 3 }) },
+      ],
+      meteor: [
+        { t: 0,  fn: () => spawnParticle({ cx: cx-50, cy: cy-70, count: 10, colors: ["#ff6a00","#ffa040","#ffcc00"], spread: 8, speed: 1, gravity: 0.0, minSize: 3, maxSize: 6 }) },
+        { t: 20, fn: () => spawnParticle({ cx, cy: cy+10, count: 80, colors: ["#ff4500","#ff6a00","#ffcc00","#fff","#ff2200"], spread: 40, speed: 6, gravity: 0.1, minSize: 2, maxSize: 9 }) },
+      ],
+      healing: [
+        { t: 0,  fn: () => spawnParticle({ cx, cy, count: 20, colors: ["#39ff14","#80ff80","#ffffff","#b0ffb0"], spread: 35, speed: 1.5, gravity: -0.04, minSize: 2, maxSize: 5 }) },
+        { t: 20, fn: () => spawnParticle({ cx, cy, count: 30, colors: ["#39ff14","#ffffff","#c0ffc0"], spread: 20, speed: 2, gravity: -0.06, minSize: 3, maxSize: 6 }) },
+      ],
+    };
+
+    const myConfigs = configs[skill] || configs.fireball;
+
+    const loop = () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      tick++;
+      
+      for (const cfg of myConfigs) {
+        if (tick === cfg.t) cfg.fn();
+      }
+      
+      particlesRef.current = particlesRef.current.filter(p => p.life > 0);
+      for (const p of particlesRef.current) {
+        p.x += p.vx;
+        p.y += p.vy;
+        p.vy += p.gravity;
+        p.vx *= 0.98;
+        p.life -= p.decay;
+        ctx.save();
+        ctx.globalAlpha = Math.max(0, p.life);
+        ctx.fillStyle = p.color;
+        ctx.shadowColor = p.color;
+        ctx.shadowBlur = p.size * 2;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size * p.life, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      }
+      
+      if (tick < 100) {
+        rafRef.current = requestAnimationFrame(loop);
+      }
+    };
+    rafRef.current = requestAnimationFrame(loop);
+    return () => cancelAnimationFrame(rafRef.current);
+  }, [playing, skill, spawnParticle]);
+
+  return <canvas ref={canvasRef} width={200} height={200} style={{ width: "100%", height: "100%", pointerEvents: "none" }} />;
 }
-function drawParticles() {
-  const dt=0.025;
-  for (let i=particles.length-1;i>=0;i--) {
-    const p=particles[i]; p.x+=p.vx*dt; p.y+=p.vy*dt; p.life-=0.045; p.vy+=30*dt;
-    if (p.life<=0){particles.splice(i,1);continue;}
-    ctx.save(); ctx.globalAlpha=p.life; ctx.fillStyle=p.color;
-    ctx.beginPath(); ctx.arc(p.x,p.y,p.r*p.life,0,Math.PI*2); ctx.fill(); ctx.restore();
-  }
+
+// ============================================================
+// ANIMATED PIXEL HERO (for showcase)
+// ============================================================
+function HeroCanvas({ animKey }) {
+  const canvasRef = useRef(null);
+  const frameRef = useRef(0);
+  const rafRef = useRef(null);
+  const anim = PLAYER_ANIMATIONS[animKey] || PLAYER_ANIMATIONS.idle_down;
+  const dir = animKey.includes("up") ? "up" : animKey.includes("left") ? "left" : animKey.includes("right") ? "right" : "down";
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    const interval = 1000 / anim.fps;
+    let last = 0;
+
+    const loop = (ts) => {
+      if (ts - last >= interval) {
+        last = ts;
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        // Ground shadow
+        ctx.fillStyle = "rgba(0,0,0,0.3)";
+        ctx.beginPath();
+        ctx.ellipse(64, 110, 20, 6, 0, 0, Math.PI * 2);
+        ctx.fill();
+        
+        drawPixelHero(ctx, 64, 80, 2.5, dir, frameRef.current, animKey);
+        
+        frameRef.current = anim.loop
+          ? (frameRef.current + 1) % anim.frames
+          : Math.min(frameRef.current + 1, anim.frames - 1);
+      }
+      rafRef.current = requestAnimationFrame(loop);
+    };
+    rafRef.current = requestAnimationFrame(loop);
+    return () => cancelAnimationFrame(rafRef.current);
+  }, [animKey, anim, dir]);
+
+  return <canvas ref={canvasRef} width={128} height={128} style={{ imageRendering: "pixelated", width: 128, height: 128 }} />;
 }
 
-/* ============================================================
-   SECTION 20: CONTROLS
-   ============================================================ */
-let touchStartX=0, touchStartY=0;
-document.getElementById('game-canvas').addEventListener('touchstart', e => {
-  if (e.touches.length>0){touchStartX=e.touches[0].clientX;touchStartY=e.touches[0].clientY;}
-},{passive:true});
-document.getElementById('game-canvas').addEventListener('touchend', e => {
-  if (e.changedTouches.length>0) {
-    const dx=e.changedTouches[0].clientX-touchStartX;
-    const dy=e.changedTouches[0].clientY-touchStartY;
-    if (Math.abs(dx)<10&&Math.abs(dy)<10) return;
-    if (Math.abs(dx)>Math.abs(dy)) setDir(dx>0?1:-1,0); else setDir(0,dy>0?1:-1);
-  }
-},{passive:true});
+// ============================================================
+// ENEMY CANVAS
+// ============================================================
+function EnemyCanvas({ enemy, state }) {
+  const canvasRef = useRef(null);
+  const frameRef = useRef(0);
+  const rafRef = useRef(null);
 
-function setDir(nx,ny) {
-  if (nx!==0&&direction.x!==0) return;
-  if (ny!==0&&direction.y!==0) return;
-  nextDir={x:nx,y:ny};
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    let last = 0;
+    const fps = state === "chase" ? 14 : state === "attack" ? 16 : 6;
+
+    const loop = (ts) => {
+      if (ts - last >= 1000 / fps) {
+        last = ts;
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        const cx = canvas.width / 2;
+        const cy = canvas.height / 2 + 10;
+        const f = frameRef.current;
+        const bob = Math.sin(f * 0.6) * (state === "chase" ? 3 : state === "patrol" ? 2 : 1);
+        const col = state === "hurt" ? "#ff6060" : state === "stunned" ? "#ffffaa" : state === "frozen" ? "#88ccff" :
+                    state === "burned" ? "#ff6600" : state === "poisoned" ? "#80ff80" : state === "death" ? "#555" : enemy.color;
+
+        // Shadow
+        ctx.fillStyle = "rgba(0,0,0,0.25)";
+        ctx.beginPath();
+        ctx.ellipse(cx, cy + enemy.size / 2 + 5, enemy.size * 0.5, enemy.size * 0.15, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.save();
+        ctx.translate(cx, cy + bob);
+        ctx.fillStyle = col;
+        ctx.shadowColor = state === "burned" ? "#ff6600" : state === "frozen" ? "#88ccff" : state === "poisoned" ? "#39ff14" : "transparent";
+        ctx.shadowBlur = (state === "burned" || state === "frozen" || state === "poisoned") ? 15 : 0;
+
+        if (enemy.id === "slime") {
+          ctx.beginPath();
+          ctx.arc(0, 0, enemy.size / 2, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.fillStyle = "rgba(255,255,255,0.3)";
+          ctx.beginPath();
+          ctx.arc(-4, -4, 5, 0, Math.PI * 2);
+          ctx.fill();
+        } else if (enemy.id === "bat") {
+          const wingFlap = Math.sin(f * 0.8) * 15;
+          ctx.beginPath();
+          ctx.arc(0, 0, enemy.size / 2 * 0.7, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.beginPath();
+          ctx.ellipse(-enemy.size / 2, -5 + wingFlap * 0.3, 14, 8, -0.4, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.beginPath();
+          ctx.ellipse(enemy.size / 2, -5 - wingFlap * 0.3, 14, 8, 0.4, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.fillStyle = "#ff4444";
+          ctx.fillRect(-4, -enemy.size / 2 * 0.4, 3, 4);
+          ctx.fillRect(1, -enemy.size / 2 * 0.4, 3, 4);
+        } else {
+          ctx.fillRect(-enemy.size * 0.35, -enemy.size * 0.4, enemy.size * 0.7, enemy.size * 0.6);
+          ctx.fillRect(-enemy.size * 0.45, -enemy.size * 0.15, enemy.size * 0.15, enemy.size * 0.3);
+          ctx.fillRect(enemy.size * 0.3, -enemy.size * 0.15, enemy.size * 0.15, enemy.size * 0.3);
+          ctx.beginPath();
+          ctx.arc(0, -enemy.size * 0.45, enemy.size * 0.3, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.fillStyle = "#222";
+          ctx.fillRect(-enemy.size * 0.12, -enemy.size * 0.52, enemy.size * 0.08, enemy.size * 0.08);
+          ctx.fillRect(enemy.size * 0.04, -enemy.size * 0.52, enemy.size * 0.08, enemy.size * 0.08);
+        }
+        ctx.restore();
+        frameRef.current++;
+      }
+      rafRef.current = requestAnimationFrame(loop);
+    };
+    rafRef.current = requestAnimationFrame(loop);
+    return () => cancelAnimationFrame(rafRef.current);
+  }, [enemy, state]);
+
+  return <canvas ref={canvasRef} width={100} height={100} style={{ imageRendering: "pixelated", width: 100, height: 100 }} />;
 }
 
-function bindDpad() {
-  const map=[['dpad-up',0,-1],['dpad-down',0,1],['dpad-left',-1,0],['dpad-right',1,0]];
-  map.forEach(([id,nx,ny]) => {
-    document.getElementById(id).addEventListener('touchstart', e => {e.preventDefault();setDir(nx,ny);playSound('click');},{passive:false});
-    document.getElementById(id).addEventListener('mousedown', () => {setDir(nx,ny);});
-  });
+// ============================================================
+// WORLD EFFECTS CANVAS
+// ============================================================
+function WorldCanvas({ effect }) {
+  const canvasRef = useRef(null);
+  const rafRef = useRef(null);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    let t = 0;
+    const W = canvas.width, H = canvas.height;
+
+    const loop = () => {
+      ctx.clearRect(0, 0, W, H);
+      t++;
+
+      if (effect === "rain") {
+        ctx.fillStyle = "#1a2e4a";
+        ctx.fillRect(0, 0, W, H);
+        ctx.strokeStyle = "rgba(150,180,220,0.7)";
+        ctx.lineWidth = 1;
+        for (let i = 0; i < 60; i++) {
+          const x = (i * 17 + t * 3) % W;
+          const y = (i * 13 + t * 8) % H;
+          ctx.beginPath();
+          ctx.moveTo(x, y);
+          ctx.lineTo(x - 1, y + 8);
+          ctx.stroke();
+        }
+      }
+      if (effect === "snow") {
+        ctx.fillStyle = "#1a2a3a";
+        ctx.fillRect(0, 0, W, H);
+        ctx.fillStyle = "#ffffff";
+        for (let i = 0; i < 50; i++) {
+          const x = (i * 23 + Math.sin(t * 0.02 + i) * 20) % W;
+          const y = (i * 17 + t * 1.5) % H;
+          ctx.beginPath();
+          ctx.arc(x, y, 2, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+      if (effect === "fire") {
+        ctx.fillStyle = "#1a0000";
+        ctx.fillRect(0, 0, W, H);
+        for (let i = 0; i < 30; i++) {
+          const x = W/2 + Math.sin(t * 0.05 + i) * 40 + (Math.random() - 0.5) * 20;
+          const y = H - 30 - (i * 5 + t * 2) % 80;
+          ctx.fillStyle = `rgba(255,${100 + Math.random() * 100},0,${0.5 + Math.random() * 0.5})`;
+          ctx.beginPath();
+          ctx.arc(x, y, 3 + Math.random() * 5, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+      if (effect === "trees") {
+        ctx.fillStyle = "#87CEEB";
+        ctx.fillRect(0, 0, W, H);
+        ctx.fillStyle = "#1a4a1a";
+        ctx.fillRect(0, H - 20, W, 20);
+        [30, 100, 180].forEach(tx => {
+          ctx.fillStyle = "#5c3010";
+          ctx.fillRect(tx - 3, 80, 6, 30);
+          const sway = Math.sin(t * 0.03 + tx) * 3;
+          ctx.fillStyle = "#1a6a1a";
+          ctx.beginPath();
+          ctx.moveTo(tx + sway, 50);
+          ctx.lineTo(tx - 25, 90);
+          ctx.lineTo(tx + 25, 90);
+          ctx.closePath();
+          ctx.fill();
+        });
+      }
+      if (effect === "water") {
+        const grad = ctx.createLinearGradient(0, 40, 0, H);
+        grad.addColorStop(0, "#0050aa");
+        grad.addColorStop(1, "#0080ff");
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 40, W, H - 40);
+        ctx.strokeStyle = "rgba(255,255,255,0.3)";
+        ctx.lineWidth = 2;
+        for (let i = 0; i < 6; i++) {
+          ctx.beginPath();
+          for (let x = 0; x < W; x += 4) {
+            ctx.lineTo(x, 55 + i * 18 + Math.sin((x / 30) + t * 0.05 + i) * 4);
+          }
+          ctx.stroke();
+        }
+      }
+
+      rafRef.current = requestAnimationFrame(loop);
+    };
+    rafRef.current = requestAnimationFrame(loop);
+    return () => cancelAnimationFrame(rafRef.current);
+  }, [effect]);
+
+  return <canvas ref={canvasRef} width={220} height={150} style={{ width: "100%", height: "100%", borderRadius: 6 }} />;
 }
-bindDpad();
 
-document.addEventListener('keydown', e => {
-  switch(e.key) {
-    case 'ArrowUp':   case 'w': setDir(0,-1); break;
-    case 'ArrowDown': case 's': setDir(0,1);  break;
-    case 'ArrowLeft': case 'a': setDir(-1,0); break;
-    case 'ArrowRight':case 'd': setDir(1,0);  break;
-    case 'Escape': case 'p': if(gameRunning){if(gamePaused)resumeGame();else pauseGame();} break;
-  }
-});
+// ============================================================
+// FX SHOWCASE CANVAS
+// ============================================================
+function FXCanvas({ fx }) {
+  const canvasRef = useRef(null);
+  const particlesRef = useRef([]);
+  const rafRef = useRef(null);
 
-window.addEventListener('resize', () => { if (gameRunning) { applyDpadSettings(); resizeCanvas(); } });
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    const W = canvas.width, H = canvas.height;
+    let t = 0;
 
-/* ============================================================
-   SECTION 21: BUTTON WIRING
-   ============================================================ */
-document.getElementById('btn-play').addEventListener('click', () => { playSound('click'); showScreen('screen-difficulty'); });
-document.getElementById('btn-bestscores').addEventListener('click', () => { playSound('click'); renderBestScores(); showScreen('screen-bestscores'); });
-document.getElementById('btn-achievements').addEventListener('click', () => { playSound('click'); renderAchList(); showScreen('screen-achievements'); });
-document.getElementById('btn-settings').addEventListener('click', () => { playSound('click'); applyDpadSettings(); showScreen('screen-settings'); });
-document.getElementById('btn-lang').addEventListener('click', () => { playSound('click'); showScreen('screen-language'); });
-document.getElementById('btn-about').addEventListener('click', () => { playSound('click'); showScreen('screen-about'); });
+    const spawnParticle = (cfg) => {
+      for (let i = 0; i < (cfg.count || 10); i++) {
+        particlesRef.current.push({
+          x: cfg.cx + (Math.random() - 0.5) * (cfg.spread || 20),
+          y: cfg.cy + (Math.random() - 0.5) * (cfg.spread || 20),
+          vx: (Math.random() - 0.5) * (cfg.speed || 3),
+          vy: (Math.random() - 0.5) * (cfg.speed || 3),
+          life: 1,
+          decay: 0.02 + Math.random() * 0.03,
+          color: cfg.colors ? cfg.colors[Math.floor(Math.random() * cfg.colors.length)] : "#fff",
+          size: (cfg.minSize || 2) + Math.random() * (cfg.maxSize || 4),
+        });
+      }
+    };
 
-document.querySelectorAll('.diff-card').forEach(card => {
-  card.addEventListener('click', () => { curDiff=card.dataset.diff; playSound('click'); renderStages(); showScreen('screen-stages'); });
-});
+    const loop = () => {
+      ctx.clearRect(0, 0, W, H);
+      t++;
 
-document.getElementById('diff-back').addEventListener('click',     () => { playSound('click'); showScreen('screen-menu'); });
-document.getElementById('stage-back').addEventListener('click',    () => { playSound('click'); showScreen('screen-difficulty'); });
-document.getElementById('bs-back').addEventListener('click',       () => { playSound('click'); showScreen('screen-menu'); });
-document.getElementById('ach-back').addEventListener('click',      () => { playSound('click'); showScreen('screen-menu'); });
-document.getElementById('settings-back').addEventListener('click', () => { playSound('click'); showScreen('screen-menu'); });
-document.getElementById('lang-back').addEventListener('click',     () => { playSound('click'); showScreen('screen-menu'); });
-document.getElementById('about-back').addEventListener('click',    () => { playSound('click'); showScreen('screen-menu'); });
+      if (fx === "shockwave" && t % 80 === 0) {
+        spawnParticle({ cx: W/2, cy: H/2, count: 20, colors: ["#fff","#aaaaff","#8888ff"], spread: 5, speed: 3 });
+      }
+      if (fx === "explosion" && t % 90 === 0) {
+        spawnParticle({ cx: W/2, cy: H/2, count: 60, colors: ["#ff4500","#ff8c00","#ffcc00","#fff","#ff2200"], spread: 5, speed: 5, minSize: 2, maxSize: 8 });
+      }
+      if (fx === "crit" && t % 60 === 0) {
+        spawnParticle({ cx: W/2, cy: H/2, count: 25, colors: ["#ff2244","#ff8800","#ffff00","#ffffff"], spread: 15, speed: 4 });
+      }
+      if (fx === "magic_circle") {
+        ctx.strokeStyle = `hsl(${260 + Math.sin(t*0.02)*20}, 80%, 70%)`;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(W/2, H/2, 40 + Math.sin(t*0.03)*10, 0, Math.PI*2);
+        ctx.stroke();
+      }
+      if (fx === "aura") {
+        for (let i = 0; i < 3; i++) {
+          ctx.strokeStyle = `rgba(${100+i*50}, ${50+i*30}, ${200+i*20}, ${0.3 + Math.sin(t*0.05+i)*0.2})`;
+          ctx.lineWidth = 3;
+          ctx.beginPath();
+          ctx.arc(W/2, H/2, 25 + i*15 + Math.sin(t*0.04+i)*5, 0, Math.PI*2);
+          ctx.stroke();
+        }
+      }
 
-document.querySelectorAll('.score-tab').forEach(tab => {
-  tab.addEventListener('click', () => { scoreDiffFilter=tab.dataset.diff; renderBestScores(); });
-});
-document.querySelectorAll('.lang-btn').forEach(btn => {
-  btn.addEventListener('click', () => { lang=btn.dataset.lang; localStorage.setItem('snakeLang',lang); applyLang(); playSound('click'); });
-});
+      particlesRef.current = particlesRef.current.filter(p => p.life > 0);
+      for (const p of particlesRef.current) {
+        p.x += p.vx;
+        p.y += p.vy;
+        p.life -= p.decay;
+        ctx.fillStyle = p.color;
+        ctx.globalAlpha = p.life;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size, 0, Math.PI*2);
+        ctx.fill();
+      }
+      ctx.globalAlpha = 1;
 
-document.getElementById('pause-btn').addEventListener('click', () => { if(gamePaused)resumeGame();else pauseGame(); });
-document.getElementById('btn-resume').addEventListener('click', () => resumeGame());
-document.getElementById('btn-restart-pause').addEventListener('click', () => { hideAllOverlays(); startGame(); });
-document.getElementById('btn-menu-pause').addEventListener('click', () => { gameRunning=false;clearInterval(gameInterval);hideAllOverlays();showScreen('screen-menu'); });
-document.getElementById('btn-retry').addEventListener('click', () => { hideAllOverlays(); startGame(); });
-document.getElementById('btn-menu-go').addEventListener('click', () => { gameRunning=false;clearInterval(gameInterval);hideAllOverlays();showScreen('screen-menu'); });
-document.getElementById('btn-next-stage').addEventListener('click', () => { if(curStage<6){curStage++;hideAllOverlays();startGame();} });
-document.getElementById('btn-menu-sc').addEventListener('click', () => { gameRunning=false;clearInterval(gameInterval);hideAllOverlays();showScreen('screen-menu'); });
+      rafRef.current = requestAnimationFrame(loop);
+    };
+    rafRef.current = requestAnimationFrame(loop);
+    return () => cancelAnimationFrame(rafRef.current);
+  }, [fx]);
 
-/* Settings sliders / buttons */
-document.getElementById('dpad-size-slider').addEventListener('input', function() {
-  dpadSize = parseInt(this.value);
-  document.getElementById('dpad-size-val').textContent = dpadSize + 'px';
-  applyDpadSettings();
-  saveSettings();
-});
-document.querySelectorAll('.pos-btn').forEach(btn => {
-  btn.addEventListener('click', () => {
-    dpadPosition = btn.dataset.pos;
-    applyDpadSettings();
-    saveSettings();
-    playSound('click');
-  });
-});
-
-/* ============================================================
-   SECTION 22: BOOT
-   ============================================================ */
-function boot() {
-  applyLang();
-  applyDpadSettings();
-  showScreen('screen-menu');
+  return <canvas ref={canvasRef} width={220} height={220} style={{ width: "100%", height: "100%", borderRadius: 8 }} />;
 }
-boot();
+
+// ============================================================
+// BOSS CANVAS
+// ============================================================
+function BossCanvas({ boss, phase }) {
+  const canvasRef = useRef(null);
+  const rafRef = useRef(null);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    const W = canvas.width, H = canvas.height;
+    let t = 0;
+
+    const loop = () => {
+      ctx.clearRect(0, 0, W, H);
+      t++;
+      const cx = W / 2, cy = H / 2 + 10;
+      const bossColor = phase === 2 ? (boss.id === "dragon" ? "#ff0000" : boss.id === "lich" ? "#cc00ff" : "#ff8c00") : boss.color;
+
+      // Aura
+      ctx.fillStyle = bossColor;
+      ctx.globalAlpha = 0.15 + Math.sin(t * 0.05) * 0.08;
+      ctx.beginPath();
+      ctx.arc(cx, cy, boss.size * 0.7, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.globalAlpha = 1;
+
+      // Body
+      ctx.fillStyle = bossColor;
+      ctx.shadowColor = bossColor;
+      ctx.shadowBlur = phase === 2 ? 30 : 10;
+
+      if (boss.id === "dragon") {
+        const wingFlap = Math.sin(t * 0.05) * 15;
+        ctx.beginPath();
+        ctx.moveTo(cx, cy);
+        ctx.lineTo(cx - boss.size * 0.8, cy - boss.size * 0.5 + wingFlap);
+        ctx.lineTo(cx - boss.size * 0.6, cy + boss.size * 0.2);
+        ctx.closePath();
+        ctx.fill();
+        ctx.beginPath();
+        ctx.moveTo(cx, cy);
+        ctx.lineTo(cx + boss.size * 0.8, cy - boss.size * 0.5 - wingFlap);
+        ctx.lineTo(cx + boss.size * 0.6, cy + boss.size * 0.2);
+        ctx.closePath();
+        ctx.fill();
+        ctx.fillRect(cx - boss.size * 0.35, cy - boss.size * 0.35, boss.size * 0.7, boss.size * 0.55);
+        ctx.beginPath();
+        ctx.arc(cx, cy - boss.size * 0.42, boss.size * 0.3, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = phase === 2 ? "#ff0000" : "#ffcc00";
+        ctx.beginPath();
+        ctx.arc(cx - 8, cy - boss.size * 0.48, 5, 0, Math.PI * 2);
+        ctx.arc(cx + 8, cy - boss.size * 0.48, 5, 0, Math.PI * 2);
+        ctx.fill();
+      } else if (boss.id === "lich") {
+        ctx.beginPath();
+        ctx.moveTo(cx, cy - boss.size * 0.45);
+        ctx.lineTo(cx - boss.size * 0.4, cy + boss.size * 0.4);
+        ctx.lineTo(cx + boss.size * 0.4, cy + boss.size * 0.4);
+        ctx.closePath();
+        ctx.fill();
+        ctx.fillStyle = "#e8dcc8";
+        ctx.beginPath();
+        ctx.arc(cx, cy - boss.size * 0.5, boss.size * 0.25, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = phase === 2 ? "#ff0000" : "#8800ff";
+        ctx.fillRect(cx - 10, cy - boss.size * 0.56, 7, 6);
+        ctx.fillRect(cx + 3, cy - boss.size * 0.56, 7, 6);
+      } else {
+        ctx.fillRect(cx - boss.size * 0.4, cy - boss.size * 0.3, boss.size * 0.8, boss.size * 0.65);
+        ctx.beginPath();
+        ctx.arc(cx, cy - boss.size * 0.38, boss.size * 0.35, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = phase === 2 ? "#ff4400" : "#ddcc88";
+        ctx.fillRect(cx - 12, cy - boss.size * 0.44, 8, 6);
+        ctx.fillRect(cx + 4, cy - boss.size * 0.44, 8, 6);
+      }
+      ctx.shadowBlur = 0;
+
+      // Health bar
+      const hpPct = phase === 2 ? 0.35 : 0.72;
+      ctx.fillStyle = "rgba(0,0,0,0.6)";
+      ctx.fillRect(10, 10, W - 20, 12);
+      ctx.fillStyle = phase === 2 ? "#ff0000" : "#ff4444";
+      ctx.fillRect(10, 10, (W - 20) * hpPct, 12);
+      ctx.fillStyle = "#fff";
+      ctx.font = "8px Orbitron, monospace";
+      ctx.fillText(boss.label.toUpperCase(), 12, 20);
+
+      rafRef.current = requestAnimationFrame(loop);
+    };
+    rafRef.current = requestAnimationFrame(loop);
+    return () => cancelAnimationFrame(rafRef.current);
+  }, [boss, phase]);
+
+  return <canvas ref={canvasRef} width={220} height={200} style={{ width: "100%", height: "100%" }} />;
+}
+
+// ============================================================
+// MAIN APP
+// ============================================================
+function RPGAnimationSystem() {
+  const [tab, setTab] = useState(0);
+  const [playerAnim, setPlayerAnim] = useState("idle_down");
+  const [selectedSkill, setSelectedSkill] = useState("fireball");
+  const [skillPlaying, setSkillPlaying] = useState(false);
+  const [skillTick, setSkillTick] = useState(0);
+  const [enemyStates, setEnemyStates] = useState({});
+  const [selectedBoss, setSelectedBoss] = useState(BOSS_DATA[0]);
+  const [bossPhase, setBossPhase] = useState(1);
+  const [worldEffect, setWorldEffect] = useState("trees");
+  const [fxType, setFxType] = useState("shockwave");
+  const [gameAnimation, setGameAnimation] = useState("idle_down");
+
+  const playSkill = () => {
+    setSkillTick(t => t + 1);
+    setSkillPlaying(true);
+    setTimeout(() => setSkillPlaying(false), 2000);
+  };
+
+  const animGroups = {
+    "Idle": ["idle_down","idle_up","idle_left","idle_right"],
+    "Walk": ["walk_down","walk_up","walk_left","walk_right"],
+    "Run": ["run_down","run_up","run_left","run_right"],
+    "Combat": ["dash","attack1","attack2","attack3","skill_cast","ult_cast"],
+    "Status": ["hurt","knockback","death","revive","victory"],
+    "Activity": ["interaction","gathering","mining","fishing","crafting"],
+  };
+
+  const WORLD_EFFECTS = ["trees","water","fire","rain","snow","fog","lava","clouds"];
+  const FX_TYPES = [
+    { id: "shockwave", label: "Shockwave" },
+    { id: "aura", label: "Aura" },
+    { id: "trail", label: "Weapon Trail" },
+    { id: "motionblur", label: "Motion Blur" },
+    { id: "crit", label: "Critical Hit" },
+    { id: "magic_circle", label: "Magic Circle" },
+    { id: "explosion", label: "Explosion" },
+  ];
+
+  const NPC_ANIMS = ["Idle", "Walking", "Talking", "Waving", "Sitting", "Working", "Trading"];
+  const PET_ANIMS = ["Follow", "Idle", "Attack", "Skill", "Happy", "Level Up"];
+
+  return (
+    <div style={{
+      width: "100%",
+      background: "linear-gradient(160deg, #0a0a12 0%, #0d0820 50%, #080810 100%)",
+      color: "#e0d0ff",
+      fontFamily: "Inter, sans-serif",
+    }}>
+      {/* Header */}
+      <div style={{
+        background: "linear-gradient(90deg, rgba(108,63,197,0.15) 0%, rgba(180,80,255,0.08) 100%)",
+        borderBottom: "1px solid rgba(108,63,197,0.4)",
+        padding: "12px 20px",
+        display: "flex", alignItems: "center", gap: 12,
+        backdropFilter: "blur(20px)",
+      }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <div style={{
+            width: 36, height: 36, borderRadius: 8,
+            background: "linear-gradient(135deg, #6c3fc5, #b040ff)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            fontSize: 18, boxShadow: "0 0 15px rgba(108,63,197,0.6)",
+          }}>⚔</div>
+          <div>
+            <h1 style={{ fontFamily: "Orbitron, monospace", fontSize: 14, fontWeight: 700, color: "#fff", margin: 0, letterSpacing: 1 }}>
+              RPG ANIMATION SYSTEM
+            </h1>
+            <div style={{ fontSize: 8, color: "#8060aa", letterSpacing: 1 }}>GAME + SHOWCASE</div>
+          </div>
+        </div>
+      </div>
+
+      {/* Tabs */}
+      <div style={{
+        display: "flex", gap: 2, padding: "10px 20px 0",
+        borderBottom: "1px solid rgba(108,63,197,0.2)",
+        overflowX: "auto",
+      }}>
+        {TABS.map((t, i) => (
+          <button key={t} onClick={() => setTab(i)}
+            style={{
+              background: tab === i ? "linear-gradient(180deg, rgba(108,63,197,0.5) 0%, rgba(108,63,197,0.2) 100%)" : "transparent",
+              border: "1px solid",
+              borderColor: tab === i ? "rgba(108,63,197,0.8)" : "transparent",
+              borderBottom: tab === i ? "1px solid rgba(30,0,60,1)" : "1px solid transparent",
+              color: tab === i ? "#e0d0ff" : "#6040a0",
+              padding: "8px 14px", cursor: "pointer",
+              fontFamily: "Orbitron, monospace", fontSize: 9,
+              letterSpacing: 1, borderRadius: "6px 6px 0 0",
+              transition: "all 0.2s", whiteSpace: "nowrap",
+            }}
+          >{t}</button>
+        ))}
+      </div>
+
+      {/* Content */}
+      <div style={{ padding: 16 }}>
+
+        {/* ===== TAB 0: WORLD ===== */}
+        {tab === 0 && (
+          <div>
+            <div className="canvas-world-wrapper" style={{ height: 400, borderRadius: 10, overflow: "hidden", border: "1px solid rgba(108,63,197,0.3)" }}>
+              <WorldGameplay onAnimationChange={setGameAnimation} />
+              <div className="hud">
+                ❤️ 100 | ⚔️ ATK 25 | 🛡️ DEF 10 | 🏃 {gameAnimation.replace(/_/g, " ").toUpperCase()}
+              </div>
+              <div className="controls-hint">WASD/Arrows = Move | SPACE = Attack | R = Run Toggle</div>
+            </div>
+            <div style={{ marginTop: 10, display: "flex", gap: 8, flexWrap: "wrap" }}>
+              {ENEMY_DATA.map(e => (
+                <span key={e.id} style={{
+                  background: `${e.color}33`, border: `1px solid ${e.color}66`,
+                  color: e.color, padding: "4px 10px", borderRadius: 12,
+                  fontSize: 10, fontFamily: "Orbitron, monospace",
+                }}>{e.label}</span>
+              ))}
+              <span style={{ color: "#5a3a8a", fontSize: 9, marginLeft: "auto" }}>
+                Current: {PLAYER_ANIMATIONS[gameAnimation]?.label || "Idle Down"}
+              </span>
+            </div>
+          </div>
+        )}
+
+        {/* ===== TAB 1: PLAYER ===== */}
+        {tab === 1 && (
+          <div style={{ display: "grid", gridTemplateColumns: "260px 1fr", gap: 20 }}>
+            <div>
+              <div style={{
+                background: "linear-gradient(180deg, rgba(20,10,40,0.8) 0%, rgba(10,5,20,0.9) 100%)",
+                border: "1px solid rgba(108,63,197,0.4)", borderRadius: 12, padding: 16,
+                textAlign: "center",
+              }}>
+                <div style={{ fontSize: 9, fontFamily: "Orbitron, monospace", color: "#8060aa", letterSpacing: 2, marginBottom: 10 }}>LIVE PREVIEW</div>
+                <div style={{
+                  background: "radial-gradient(circle at 50% 60%, rgba(108,63,197,0.15) 0%, transparent 70%)",
+                  borderRadius: 10, padding: 16, display: "inline-block",
+                  border: "1px solid rgba(108,63,197,0.2)",
+                }}>
+                  <HeroCanvas animKey={playerAnim} />
+                </div>
+                <div style={{
+                  fontFamily: "Orbitron, monospace", fontSize: 11, color: "#c090ff",
+                  marginTop: 10, textTransform: "uppercase",
+                }}>{PLAYER_ANIMATIONS[playerAnim]?.label}</div>
+                <div style={{ fontSize: 8, color: "#5a3a8a", marginTop: 4 }}>
+                  {PLAYER_ANIMATIONS[playerAnim]?.frames}f · {PLAYER_ANIMATIONS[playerAnim]?.fps}fps · {PLAYER_ANIMATIONS[playerAnim]?.loop ? "LOOP" : "ONE-SHOT"}
+                </div>
+              </div>
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              {Object.entries(animGroups).map(([group, anims]) => (
+                <div key={group} style={{ background: "rgba(10,5,20,0.7)", borderRadius: 8, padding: 12, border: "1px solid rgba(108,63,197,0.15)" }}>
+                  <div style={{ fontSize: 9, fontFamily: "Orbitron, monospace", color: "#5a3a8a", letterSpacing: 1, marginBottom: 8 }}>
+                    ◈ {group.toUpperCase()}
+                  </div>
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
+                    {anims.map(key => (
+                      <button key={key} onClick={() => setPlayerAnim(key)}
+                        style={{
+                          background: playerAnim === key ? "linear-gradient(135deg, #6c3fc5, #4a2090)" : "rgba(108,63,197,0.1)",
+                          border: `1px solid ${playerAnim === key ? "#9060ff" : "rgba(108,63,197,0.3)"}`,
+                          color: playerAnim === key ? "#fff" : "#8060a0",
+                          padding: "4px 8px", borderRadius: 4, cursor: "pointer",
+                          fontFamily: "Orbitron, monospace", fontSize: 8,
+                          transition: "all 0.15s",
+                        }}
+                      >{PLAYER_ANIMATIONS[key]?.label}</button>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* ===== TAB 2: SKILLS ===== */}
+        {tab === 2 && (
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+            {Object.entries(SKILL_DATA).map(([id, sk]) => {
+              const isSelected = selectedSkill === id;
+              return (
+                <div key={id} onClick={() => setSelectedSkill(id)}
+                  style={{
+                    background: isSelected ? "rgba(10,5,20,0.9)" : "rgba(10,5,20,0.6)",
+                    border: `1px solid ${isSelected ? sk.color + "88" : "rgba(108,63,197,0.2)"}`,
+                    borderRadius: 10, padding: 14, cursor: "pointer",
+                    transition: "all 0.2s",
+                    boxShadow: isSelected ? `0 0 15px ${sk.color}33` : "none",
+                  }}>
+                  <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
+                    <div style={{ position: "relative", width: 100, height: 100, flexShrink: 0 }}>
+                      <div style={{ width: "100%", height: "100%", background: "rgba(0,0,0,0.5)", borderRadius: 8, border: `1px solid ${sk.color}44` }}>
+                        <SkillCanvas skill={id} playing={isSelected && skillPlaying} key={`${id}-${skillTick}`} />
+                      </div>
+                      <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 30, pointerEvents: "none" }}>
+                        {sk.icon}
+                      </div>
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontFamily: "Orbitron, monospace", color: sk.color, fontSize: 11, fontWeight: 700 }}>
+                        {sk.label}
+                      </div>
+                      <div style={{ fontSize: 9, color: "#6040a0", marginTop: 4 }}>{sk.desc}</div>
+                      {isSelected && (
+                        <button onClick={(e) => { e.stopPropagation(); playSkill(); }}
+                          style={{
+                            marginTop: 8, background: `linear-gradient(135deg, ${sk.color}, ${sk.glow})`,
+                            border: "none", color: "#000", padding: "5px 12px",
+                            borderRadius: 4, cursor: "pointer", fontFamily: "Orbitron, monospace",
+                            fontSize: 8, fontWeight: 700,
+                          }}>▶ CAST</button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {/* ===== TAB 3: ENEMIES ===== */}
+        {tab === 3 && (
+          <div>
+            <div style={{ fontSize: 9, fontFamily: "Orbitron, monospace", color: "#5a3a8a", letterSpacing: 1, marginBottom: 12 }}>◈ SELECT STATE TO PREVIEW</div>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: 12 }}>
+              {ENEMY_DATA.map(enemy => {
+                const st = enemyStates[enemy.id] || "idle";
+                const STATES = ["spawn","idle","patrol","walk","chase","attack","hurt","stunned","frozen","burned","death"];
+                return (
+                  <div key={enemy.id} style={{
+                    background: "rgba(10,5,20,0.8)", border: "1px solid rgba(108,63,197,0.2)",
+                    borderRadius: 10, padding: 12,
+                  }}>
+                    <div style={{ textAlign: "center" }}>
+                      <EnemyCanvas enemy={enemy} state={st} />
+                    </div>
+                    <div style={{ fontFamily: "Orbitron, monospace", color: "#c090ff", fontSize: 10, textAlign: "center", margin: "6px 0" }}>
+                      {enemy.label}
+                    </div>
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 3 }}>
+                      {STATES.map(s => (
+                        <button key={s} onClick={() => setEnemyStates(prev => ({ ...prev, [enemy.id]: s }))}
+                          style={{
+                            background: st === s ? `${enemy.color}44` : "rgba(108,63,197,0.1)",
+                            border: `1px solid ${st === s ? enemy.color : "rgba(108,63,197,0.2)"}`,
+                            color: st === s ? "#fff" : "#6040a0",
+                            padding: "2px 5px", borderRadius: 3, cursor: "pointer",
+                            fontFamily: "Orbitron, monospace", fontSize: 7,
+                          }}>{s}</button>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* ===== TAB 4: BOSSES ===== */}
+        {tab === 4 && (
+          <div>
+            <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
+              {BOSS_DATA.map(b => (
+                <button key={b.id} onClick={() => setSelectedBoss(b)}
+                  style={{
+                    background: selectedBoss.id === b.id ? `linear-gradient(135deg, ${b.color}66, ${b.color}33)` : "rgba(10,5,20,0.7)",
+                    border: `1px solid ${selectedBoss.id === b.id ? b.color : "rgba(108,63,197,0.3)"}`,
+                    color: selectedBoss.id === b.id ? "#fff" : "#8060a0",
+                    padding: "6px 14px", borderRadius: 6, cursor: "pointer",
+                    fontFamily: "Orbitron, monospace", fontSize: 9,
+                  }}>{b.label}</button>
+              ))}
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "240px 1fr", gap: 20 }}>
+              <div style={{
+                background: "rgba(10,5,20,0.9)", border: `1px solid ${selectedBoss.color}44`,
+                borderRadius: 10, overflow: "hidden",
+              }}>
+                <BossCanvas boss={selectedBoss} phase={bossPhase} />
+              </div>
+              <div>
+                <div style={{ background: "rgba(10,5,20,0.8)", borderRadius: 8, padding: 14, border: "1px solid rgba(108,63,197,0.2)" }}>
+                  <div style={{ fontFamily: "Orbitron, monospace", fontSize: 12, color: selectedBoss.color, fontWeight: 700 }}>
+                    {selectedBoss.label.toUpperCase()}
+                  </div>
+                  <div style={{ marginTop: 10 }}>
+                    <div style={{ fontSize: 8, color: "#5a3a8a", fontFamily: "Orbitron, monospace", letterSpacing: 1, marginBottom: 6 }}>PHASE</div>
+                    <div style={{ display: "flex", gap: 6 }}>
+                      {[1, 2].map(p => (
+                        <button key={p} onClick={() => setBossPhase(p)}
+                          style={{
+                            background: bossPhase === p ? "linear-gradient(135deg, #6c3fc5, #4a2090)" : "rgba(108,63,197,0.1)",
+                            border: `1px solid ${bossPhase === p ? "#9060ff" : "rgba(108,63,197,0.3)"}`,
+                            color: bossPhase === p ? "#fff" : "#6040a0",
+                            padding: "5px 16px", borderRadius: 4, cursor: "pointer",
+                            fontFamily: "Orbitron, monospace", fontSize: 9,
+                          }}>Phase {p}{p === 2 ? " 🔥" : ""}</button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ===== TAB 5: NPCs & Pets ===== */}
+        {tab === 5 && (
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
+            <div style={{ background: "rgba(10,5,20,0.8)", borderRadius: 10, padding: 16, border: "1px solid rgba(108,63,197,0.2)" }}>
+              <div style={{ fontFamily: "Orbitron, monospace", color: "#c090ff", fontSize: 11, letterSpacing: 1, marginBottom: 12 }}>◈ NPC ANIMATIONS</div>
+              {NPC_ANIMS.map(anim => (
+                <div key={anim} style={{
+                  display: "flex", alignItems: "center", gap: 10,
+                  padding: "8px 0", borderBottom: "1px solid rgba(108,63,197,0.1)",
+                }}>
+                  <div style={{
+                    width: 28, height: 28, borderRadius: 4,
+                    background: "linear-gradient(135deg, #3060a0, #204080)",
+                    display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14,
+                  }}>
+                    {anim === "Idle" ? "🧍" : anim === "Walking" ? "🚶" : anim === "Talking" ? "💬" : anim === "Waving" ? "👋" : anim === "Sitting" ? "🪑" : anim === "Working" ? "⚒️" : "🤝"}
+                  </div>
+                  <div>
+                    <div style={{ color: "#c090ff", fontSize: 11, fontFamily: "Orbitron, monospace" }}>{anim}</div>
+                    <div style={{ fontSize: 8, color: "#5a3a8a" }}>Smooth looping</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div style={{ background: "rgba(10,5,20,0.8)", borderRadius: 10, padding: 16, border: "1px solid rgba(108,63,197,0.2)" }}>
+              <div style={{ fontFamily: "Orbitron, monospace", color: "#c090ff", fontSize: 11, letterSpacing: 1, marginBottom: 12 }}>◈ PET ANIMATIONS</div>
+              {PET_ANIMS.map(anim => (
+                <div key={anim} style={{
+                  display: "flex", alignItems: "center", gap: 10,
+                  padding: "8px 0", borderBottom: "1px solid rgba(108,63,197,0.1)",
+                }}>
+                  <div style={{
+                    width: 28, height: 28, borderRadius: 4,
+                    background: "linear-gradient(135deg, #206040, #104020)",
+                    display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14,
+                  }}>
+                    {anim === "Follow" ? "🐾" : anim === "Idle" ? "🐱" : anim === "Attack" ? "⚔️" : anim === "Skill" ? "✨" : anim === "Happy" ? "💖" : "⬆️"}
+                  </div>
+                  <div>
+                    <div style={{ color: "#c090ff", fontSize: 11, fontFamily: "Orbitron, monospace" }}>{anim}</div>
+                    <div style={{ fontSize: 8, color: "#5a3a8a" }}>{anim === "Level Up" ? "One-shot" : "Looping"}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* ===== TAB 6: WORLD & UI ===== */}
+        {tab === 6 && (
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
+            <div>
+              <div style={{ fontFamily: "Orbitron, monospace", color: "#c090ff", fontSize: 11, letterSpacing: 1, marginBottom: 10 }}>◈ WORLD EFFECTS</div>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginBottom: 10 }}>
+                {WORLD_EFFECTS.map(e => (
+                  <button key={e} onClick={() => setWorldEffect(e)}
+                    style={{
+                      background: worldEffect === e ? "linear-gradient(135deg, #6c3fc5, #4a2090)" : "rgba(108,63,197,0.1)",
+                      border: `1px solid ${worldEffect === e ? "#9060ff" : "rgba(108,63,197,0.3)"}`,
+                      color: worldEffect === e ? "#fff" : "#6040a0",
+                      padding: "4px 10px", borderRadius: 4, cursor: "pointer",
+                      fontFamily: "Orbitron, monospace", fontSize: 8,
+                      textTransform: "capitalize",
+                    }}>{e}</button>
+                ))}
+              </div>
+              <div style={{ height: 150, background: "rgba(0,0,0,0.5)", borderRadius: 8, overflow: "hidden", border: "1px solid rgba(108,63,197,0.2)" }}>
+                <WorldCanvas effect={worldEffect} />
+              </div>
+            </div>
+            <div>
+              <div style={{ fontFamily: "Orbitron, monospace", color: "#c090ff", fontSize: 11, letterSpacing: 1, marginBottom: 10 }}>◈ UI ANIMATIONS</div>
+              <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                {["Quest","Damage","Level Up","Achievement"].map(b => (
+                  <button key={b} style={{
+                    background: "linear-gradient(135deg, #6c3fc5 0%, #4a2090 100%)",
+                    color: "#fff", border: "1px solid #9060ff",
+                    padding: "6px 12px", borderRadius: 4, cursor: "pointer",
+                    fontFamily: "Orbitron, monospace", fontSize: 9,
+                  }}>{b}</button>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ===== TAB 7: FX SHOWCASE ===== */}
+        {tab === 7 && (
+          <div>
+            <div style={{ fontFamily: "Orbitron, monospace", color: "#c090ff", fontSize: 11, letterSpacing: 1, marginBottom: 12 }}>◈ VISUAL EFFECTS</div>
+            <div style={{ display: "flex", gap: 4, flexWrap: "wrap", marginBottom: 16 }}>
+              {FX_TYPES.map(fx => (
+                <button key={fx.id} onClick={() => setFxType(fx.id)}
+                  style={{
+                    background: fxType === fx.id ? "linear-gradient(135deg, #6c3fc5, #4a2090)" : "rgba(108,63,197,0.1)",
+                    border: `1px solid ${fxType === fx.id ? "#9060ff" : "rgba(108,63,197,0.3)"}`,
+                    color: fxType === fx.id ? "#fff" : "#6040a0",
+                    padding: "5px 12px", borderRadius: 4, cursor: "pointer",
+                    fontFamily: "Orbitron, monospace", fontSize: 8,
+                  }}>{fx.label}</button>
+              ))}
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "240px 1fr", gap: 20 }}>
+              <div style={{
+                height: 240, background: "rgba(0,0,0,0.7)", borderRadius: 10, overflow: "hidden",
+                border: "1px solid rgba(108,63,197,0.3)",
+              }}>
+                <FXCanvas fx={fxType} key={fxType} />
+              </div>
+              <div style={{ background: "rgba(10,5,20,0.8)", borderRadius: 10, padding: 16, border: "1px solid rgba(108,63,197,0.2)" }}>
+                <div style={{ fontFamily: "Orbitron, monospace", color: "#c090ff", fontSize: 12, marginBottom: 12 }}>
+                  {FX_TYPES.find(f => f.id === fxType)?.label}
+                </div>
+                {["GPU Canvas 2D","Particle System","Glow Effects","Animation Loop"].map(f => (
+                  <div key={f} style={{ display: "flex", alignItems: "center", gap: 6, padding: "4px 0" }}>
+                    <div style={{ width: 4, height: 4, borderRadius: "50%", background: "#9060ff" }} />
+                    <span style={{ fontSize: 10, color: "#8060a0" }}>{f}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Footer */}
+      <div style={{
+        borderTop: "1px solid rgba(108,63,197,0.2)",
+        padding: "10px 20px",
+        display: "flex", justifyContent: "space-between", alignItems: "center",
+        background: "rgba(0,0,0,0.3)",
+      }}>
+        <span style={{ fontSize: 8, color: "#3a2060", fontFamily: "Orbitron, monospace", letterSpacing: 1 }}>
+          {Object.keys(PLAYER_ANIMATIONS).length} STATES · {Object.keys(SKILL_DATA).length} SKILLS · {ENEMY_DATA.length} ENEMIES · {BOSS_DATA.length} BOSSES
+        </span>
+        <div style={{ display: "flex", gap: 4 }}>
+          {["#6c3fc5","#f5a623","#00d4ff","#39ff14","#ff2244"].map(c => (
+            <div key={c} style={{ width: 6, height: 6, borderRadius: "50%", background: c, boxShadow: `0 0 4px ${c}` }} />
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Render app
+ReactDOM.render(<RPGAnimationSystem />, document.getElementById("root"));
 </script>
 </body>
 </html>
