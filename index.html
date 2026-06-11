@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>RPG Animation System - Full Game + Showcase</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>RPG Adventure - Fantasy Realm</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
@@ -13,26 +13,30 @@
       justify-content: center;
       align-items: center;
       min-height: 100vh;
-      padding: 20px;
+      padding: 10px;
+      overflow-x: hidden;
+      touch-action: manipulation;
+      user-select: none;
+      -webkit-user-select: none;
     }
-    .game-wrapper {
-      width: 1200px;
+    .game-container {
+      width: 1000px;
       max-width: 100%;
       background: linear-gradient(160deg, #0f0f1a 0%, #0a0818 100%);
-      border: 2px solid rgba(108, 63, 197, 0.4);
+      border: 2px solid rgba(108, 63, 197, 0.5);
       border-radius: 20px;
       overflow: hidden;
-      box-shadow: 0 20px 50px rgba(0,0,0,0.8);
+      box-shadow: 0 20px 60px rgba(0,0,0,0.8), 0 0 100px rgba(108,63,197,0.15);
     }
-    .menu-bar {
+    .header {
+      background: linear-gradient(90deg, rgba(108,63,197,0.2) 0%, rgba(180,80,255,0.1) 100%);
+      border-bottom: 1px solid rgba(108,63,197,0.4);
+      padding: 10px 20px;
       display: flex;
       align-items: center;
-      gap: 6px;
-      padding: 10px 20px;
-      background: rgba(20, 10, 50, 0.8);
-      backdrop-filter: blur(12px);
-      border-bottom: 1px solid rgba(108,63,197,0.4);
+      justify-content: space-between;
       flex-wrap: wrap;
+      gap: 8px;
     }
     .logo {
       font-family: 'Orbitron', monospace;
@@ -40,79 +44,357 @@
       font-size: 16px;
       color: #c090ff;
       letter-spacing: 2px;
-      margin-right: 15px;
       text-shadow: 0 0 15px #6c3fc5;
     }
-    .menu-btn {
-      background: rgba(108,63,197,0.1);
-      border: 1px solid rgba(108,63,197,0.4);
+    .nav-menu {
+      display: flex;
+      gap: 4px;
+      flex-wrap: wrap;
+    }
+    .nav-btn {
+      background: transparent;
+      border: 1px solid rgba(108,63,197,0.3);
       color: #b0a0d0;
       padding: 6px 12px;
-      border-radius: 20px;
+      border-radius: 8px;
       font-family: 'Orbitron', monospace;
       font-size: 9px;
-      letter-spacing: 0.8px;
+      letter-spacing: 1px;
       cursor: pointer;
-      transition: all 0.2s;
-      white-space: nowrap;
+      transition: all 0.3s;
     }
-    .menu-btn.active {
-      background: #6c3fc5;
+    .nav-btn:hover, .nav-btn.active {
+      background: rgba(108,63,197,0.2);
       border-color: #9060ff;
-      color: white;
-      box-shadow: 0 0 15px #6c3fc5aa;
+      color: #fff;
     }
-    .menu-btn:hover {
-      border-color: #9060ff;
-      background: rgba(108,63,197,0.3);
+    .content-area {
+      min-height: 450px;
     }
-    .game-content {
-      display: flex;
-      flex-direction: column;
-    }
-    .canvas-world-wrapper {
+    /* Game World */
+    .game-world {
       position: relative;
       width: 100%;
-      height: 400px;
+      height: 500px;
       background: #0b0b14;
+      overflow: hidden;
     }
-    .hud {
+    .game-world canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+    .game-hud-top {
       position: absolute;
-      bottom: 15px;
-      left: 20px;
-      color: white;
+      top: 10px;
+      left: 10px;
+      right: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      pointer-events: none;
+      z-index: 10;
+      gap: 10px;
+    }
+    .hud-panel {
+      background: rgba(0,0,0,0.75);
+      border: 1px solid rgba(108,63,197,0.4);
+      border-radius: 10px;
+      padding: 8px 14px;
+      color: #fff;
       font-family: 'Orbitron', monospace;
-      font-size: 11px;
-      background: rgba(0,0,0,0.6);
-      padding: 6px 14px;
-      border-radius: 20px;
-      backdrop-filter: blur(8px);
-      border: 1px solid #6c3fc5;
-    }
-    .controls-hint {
-      position: absolute;
-      bottom: 15px;
-      right: 20px;
-      color: #aaa;
       font-size: 10px;
-      background: rgba(0,0,0,0.5);
-      padding: 5px 14px;
-      border-radius: 20px;
+      backdrop-filter: blur(10px);
+      min-width: 120px;
     }
-    .showcase-panel {
+    .hp-bar-bg {
+      background: #333;
+      height: 8px;
+      border-radius: 4px;
+      margin-top: 4px;
+      overflow: hidden;
+    }
+    .hp-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #ff2244, #ff6644);
+      transition: width 0.3s;
+      border-radius: 4px;
+    }
+    .mp-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #2244ff, #6644ff);
+      transition: width 0.3s;
+      border-radius: 4px;
+    }
+    /* Joystick */
+    .joystick-container {
+      position: absolute;
+      bottom: 30px;
+      left: 30px;
+      width: 120px;
+      height: 120px;
+      z-index: 20;
+      pointer-events: all;
+    }
+    .joystick-base {
+      width: 100%;
+      height: 100%;
+      background: rgba(108,63,197,0.2);
+      border: 2px solid rgba(108,63,197,0.5);
+      border-radius: 50%;
+      position: relative;
+      touch-action: none;
+      box-shadow: 0 0 20px rgba(108,63,197,0.3);
+    }
+    .joystick-thumb {
+      width: 50px;
+      height: 50px;
+      background: radial-gradient(circle, #9060ff, #6c3fc5);
+      border-radius: 50%;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      box-shadow: 0 0 15px rgba(108,63,197,0.6);
+      transition: none;
+      pointer-events: none;
+    }
+    /* Skill Buttons */
+    .skill-buttons {
+      position: absolute;
+      bottom: 30px;
+      right: 30px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      z-index: 20;
+      pointer-events: all;
+    }
+    .skill-row {
+      display: flex;
+      gap: 8px;
+    }
+    .skill-btn {
+      width: 55px;
+      height: 55px;
+      border-radius: 14px;
+      border: 2px solid;
+      background: rgba(0,0,0,0.7);
+      color: #fff;
+      font-size: 22px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      transition: all 0.15s;
+      backdrop-filter: blur(5px);
+      touch-action: manipulation;
+    }
+    .skill-btn:active {
+      transform: scale(0.9);
+    }
+    .skill-btn .cooldown {
+      position: absolute;
+      inset: 0;
+      background: rgba(0,0,0,0.6);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      font-family: 'Orbitron', monospace;
+      color: #fff;
+    }
+    .skill-label {
+      position: absolute;
+      bottom: -18px;
+      font-size: 8px;
+      font-family: 'Orbitron', monospace;
+      color: #c090ff;
+      white-space: nowrap;
+    }
+    .attack-btn {
+      width: 65px;
+      height: 65px;
+      border-radius: 50%;
+      background: radial-gradient(circle, #ff6644, #cc2200);
+      border: 3px solid #ffaa00;
+      font-size: 28px;
+      box-shadow: 0 0 25px rgba(255,100,50,0.5);
+    }
+    .back-btn {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      z-index: 30;
+      pointer-events: all;
+      background: rgba(108,63,197,0.4);
+      border: 1px solid #9060ff;
+      color: #fff;
+      padding: 6px 14px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-family: 'Orbitron', monospace;
+      font-size: 9px;
+      backdrop-filter: blur(5px);
+    }
+    /* Home */
+    .home-page {
+      padding: 20px;
+      text-align: center;
+    }
+    .character-select {
+      display: flex;
+      gap: 16px;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin: 20px 0;
+    }
+    .char-card {
+      background: rgba(20,10,40,0.8);
+      border: 2px solid rgba(108,63,197,0.3);
+      border-radius: 16px;
       padding: 16px;
-      background: rgba(10, 5, 20, 0.8);
-      max-height: 500px;
+      width: 180px;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    .char-card:hover {
+      border-color: #9060ff;
+      transform: translateY(-3px);
+    }
+    .char-card.selected {
+      border-color: #b040ff;
+      background: rgba(108,63,197,0.2);
+      box-shadow: 0 0 30px rgba(108,63,197,0.5);
+    }
+    .char-avatar {
+      width: 70px;
+      height: 70px;
+      margin: 0 auto 10px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 35px;
+    }
+    .char-name {
+      font-family: 'Orbitron', monospace;
+      color: #c090ff;
+      font-size: 13px;
+    }
+    .play-btn {
+      background: linear-gradient(135deg, #6c3fc5, #b040ff);
+      border: none;
+      color: #fff;
+      padding: 14px 40px;
+      border-radius: 12px;
+      font-family: 'Orbitron', monospace;
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      cursor: pointer;
+      transition: all 0.3s;
+      box-shadow: 0 0 30px rgba(108,63,197,0.5);
+    }
+    .play-btn:disabled {
+      opacity: 0.3;
+      cursor: not-allowed;
+    }
+    /* Items */
+    .items-page {
+      padding: 16px;
+    }
+    .items-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+      gap: 10px;
+    }
+    .item-slot {
+      background: rgba(20,10,40,0.6);
+      border: 1px solid rgba(108,63,197,0.3);
+      border-radius: 10px;
+      padding: 10px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .item-slot:hover {
+      border-color: #9060ff;
+      background: rgba(108,63,197,0.2);
+    }
+    .item-icon {
+      font-size: 28px;
+    }
+    /* Info */
+    .info-page {
+      padding: 16px;
+      color: #c090ff;
+      max-height: 450px;
       overflow-y: auto;
     }
-    ::-webkit-scrollbar { width: 6px; }
+    .info-section {
+      background: rgba(20,10,40,0.6);
+      border: 1px solid rgba(108,63,197,0.3);
+      border-radius: 10px;
+      padding: 12px;
+      margin-bottom: 12px;
+    }
+    .info-section h3 {
+      font-family: 'Orbitron', monospace;
+      font-size: 11px;
+      color: #b040ff;
+      margin-bottom: 6px;
+    }
+    .info-section li {
+      font-size: 9px;
+      color: #8060aa;
+      line-height: 1.5;
+    }
+    .info-section li::before {
+      content: "◈ ";
+      color: #6c3fc5;
+    }
+    /* Language */
+    .language-page {
+      padding: 20px;
+      text-align: center;
+    }
+    .lang-btn {
+      background: rgba(20,10,40,0.6);
+      border: 2px solid rgba(108,63,197,0.3);
+      color: #c090ff;
+      padding: 10px 20px;
+      border-radius: 10px;
+      font-family: 'Orbitron', monospace;
+      font-size: 10px;
+      cursor: pointer;
+      margin: 4px;
+      transition: all 0.3s;
+    }
+    .lang-btn.active {
+      border-color: #b040ff;
+      background: rgba(108,63,197,0.2);
+      box-shadow: 0 0 20px rgba(108,63,197,0.4);
+    }
+    /* About */
+    .about-page {
+      padding: 20px;
+      text-align: center;
+      color: #c090ff;
+    }
+    ::-webkit-scrollbar { width: 4px; }
     ::-webkit-scrollbar-track { background: #0a0a12; }
-    ::-webkit-scrollbar-thumb { background: #4a2090; border-radius: 3px; }
-    @keyframes floatUp { 0% { transform: translateY(0); opacity: 1; } 100% { transform: translateY(-60px); opacity: 0; } }
-    @keyframes slideIn { 0% { transform: translateX(100%); opacity: 0; } 100% { transform: translateX(0); opacity: 1; } }
-    @keyframes lvlupPop { 0% { transform: scale(0.5) rotate(-5deg); opacity: 0; } 100% { transform: scale(1) rotate(0deg); opacity: 1; } }
-    @keyframes windowOpen { 0% { transform: scale(0.8) translateY(-20px); opacity: 0; } 100% { transform: scale(1) translateY(0); opacity: 1; } }
-    @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.5; } }
+    ::-webkit-scrollbar-thumb { background: #4a2090; border-radius: 2px; }
+    @media (max-width: 600px) {
+      .joystick-container { width: 100px; height: 100px; bottom: 20px; left: 20px; }
+      .joystick-thumb { width: 40px; height: 40px; }
+      .skill-btn { width: 45px; height: 45px; font-size: 18px; }
+      .attack-btn { width: 55px; height: 55px; font-size: 24px; }
+      .skill-buttons { bottom: 20px; right: 20px; gap: 6px; }
+      .char-card { width: 140px; padding: 12px; }
+    }
   </style>
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
 </head>
@@ -127,431 +409,954 @@
 const { useState, useEffect, useRef, useCallback } = React;
 
 // ============================================================
-// ANIMATION STATE MACHINE CONFIG
+// ENHANCED ANIMATION SYSTEM
 // ============================================================
-const PLAYER_ANIMATIONS = {
-  idle_down:   { frames: 4, row: 0, fps: 4,  loop: true,  label: "Idle Down" },
-  idle_up:     { frames: 4, row: 1, fps: 4,  loop: true,  label: "Idle Up" },
-  idle_left:   { frames: 4, row: 2, fps: 4,  loop: true,  label: "Idle Left" },
-  idle_right:  { frames: 4, row: 3, fps: 4,  loop: true,  label: "Idle Right" },
-  walk_down:   { frames: 6, row: 0, fps: 8,  loop: true,  label: "Walk Down" },
-  walk_up:     { frames: 6, row: 1, fps: 8,  loop: true,  label: "Walk Up" },
-  walk_left:   { frames: 6, row: 2, fps: 8,  loop: true,  label: "Walk Left" },
-  walk_right:  { frames: 6, row: 3, fps: 8,  loop: true,  label: "Walk Right" },
-  run_down:    { frames: 6, row: 0, fps: 14, loop: true,  label: "Run Down" },
-  run_up:      { frames: 6, row: 1, fps: 14, loop: true,  label: "Run Up" },
-  run_left:    { frames: 6, row: 2, fps: 14, loop: true,  label: "Run Left" },
-  run_right:   { frames: 6, row: 3, fps: 14, loop: true,  label: "Run Right" },
-  dash:        { frames: 5, row: 4, fps: 18, loop: false, label: "Dash" },
-  attack1:     { frames: 5, row: 5, fps: 16, loop: false, label: "Attack Combo 1" },
-  attack2:     { frames: 6, row: 6, fps: 16, loop: false, label: "Attack Combo 2" },
-  attack3:     { frames: 7, row: 7, fps: 18, loop: false, label: "Attack Combo 3" },
-  skill_cast:  { frames: 8, row: 8, fps: 14, loop: false, label: "Skill Cast" },
-  ult_cast:    { frames: 10, row: 9, fps: 14, loop: false, label: "Ultimate Cast" },
-  hurt:        { frames: 3, row: 10, fps: 12, loop: false, label: "Hurt" },
-  knockback:   { frames: 4, row: 11, fps: 14, loop: false, label: "Knockback" },
-  death:       { frames: 8, row: 12, fps: 10, loop: false, label: "Death" },
-  revive:      { frames: 8, row: 12, fps: 8,  loop: false, label: "Revive" },
-  victory:     { frames: 6, row: 13, fps: 8,  loop: true,  label: "Victory" },
-  interaction: { frames: 4, row: 14, fps: 6,  loop: true,  label: "Interaction" },
-  gathering:   { frames: 6, row: 14, fps: 8,  loop: true,  label: "Gathering" },
-  mining:      { frames: 6, row: 15, fps: 8,  loop: true,  label: "Mining" },
-  fishing:     { frames: 8, row: 16, fps: 6,  loop: true,  label: "Fishing" },
-  crafting:    { frames: 6, row: 17, fps: 6,  loop: true,  label: "Crafting" },
+const ANIM_STATES = {
+  idle_down:   { frames: 8, fps: 6,  loop: true },
+  idle_up:     { frames: 8, fps: 6,  loop: true },
+  idle_left:   { frames: 8, fps: 6,  loop: true },
+  idle_right:  { frames: 8, fps: 6,  loop: true },
+  walk_down:   { frames: 8, fps: 10, loop: true },
+  walk_up:     { frames: 8, fps: 10, loop: true },
+  walk_left:   { frames: 8, fps: 10, loop: true },
+  walk_right:  { frames: 8, fps: 10, loop: true },
+  run_down:    { frames: 8, fps: 14, loop: true },
+  run_up:      { frames: 8, fps: 14, loop: true },
+  run_left:    { frames: 8, fps: 14, loop: true },
+  run_right:   { frames: 8, fps: 14, loop: true },
+  attack1:     { frames: 8, fps: 14, loop: false },
+  attack2:     { frames: 8, fps: 14, loop: false },
+  skill1:      { frames: 10, fps: 14, loop: false },
+  skill2:      { frames: 10, fps: 14, loop: false },
+  skill3:      { frames: 12, fps: 14, loop: false },
+  hurt:        { frames: 4, fps: 10, loop: false },
+  death:       { frames: 10, fps: 8,  loop: false },
+  victory:     { frames: 8, fps: 8,  loop: true },
 };
 
-const SKILL_DATA = {
-  fireball:  { color: "#ff4500", glow: "#ff8c00", label: "Fireball",     icon: "🔥", desc: "Charge → Launch → Trail → Explosion" },
-  ice_blast: { color: "#00d4ff", glow: "#80e8ff", label: "Ice Blast",    icon: "❄️", desc: "Formation → Shards → Freeze Effect" },
-  thunder:   { color: "#ffe000", glow: "#fff380", label: "Thunder Strike",icon: "⚡", desc: "Lightning Beam → Ground Impact → Electric Particles" },
-  meteor:    { color: "#ff6a00", glow: "#ffa040", label: "Meteor",        icon: "☄️", desc: "Falling Meteor → Ground Crack → Explosion → Debris" },
-  healing:   { color: "#39ff14", glow: "#b0ffb0", label: "Healing",       icon: "✨", desc: "Magic Circle → Light Particles → Recovery" },
+const SKILLS = [
+  { id: "skill1", name: "Slash", icon: "⚔️", color: "#ff6644", cooldown: 2000, damage: 1.5, mp: 15, desc: "Powerful sword slash" },
+  { id: "skill2", name: "Blast", icon: "💥", color: "#ff8800", cooldown: 4000, damage: 2.5, mp: 30, desc: "Energy explosion" },
+  { id: "skill3", name: "Storm", icon: "🌪️", color: "#00d4ff", cooldown: 6000, damage: 4.0, mp: 50, desc: "Elemental storm" },
+];
+
+const CHARACTERS = [
+  {
+    id: "warrior", name: "Aldric", className: "Warrior", icon: "⚔️",
+    color: "#ff6644", colorDark: "#cc2200", hairColor: "#3a1a0a",
+    stats: { hp: 200, mp: 80, atk: 35, def: 25, spd: 15 },
+    desc: "A brave knight with heavy armor and powerful sword attacks.",
+    skinTone: "#f5c5a0",
+  },
+  {
+    id: "mage", name: "Lyra", className: "Mage", icon: "🔮",
+    color: "#8844ff", colorDark: "#4400aa", hairColor: "#e8d0ff",
+    stats: { hp: 120, mp: 200, atk: 55, def: 10, spd: 20 },
+    desc: "A wise sorceress wielding devastating elemental magic.",
+    skinTone: "#fce4d6",
+  },
+  {
+    id: "archer", name: "Kael", className: "Archer", icon: "🏹",
+    color: "#22aa44", colorDark: "#115522", hairColor: "#2a5a1a",
+    stats: { hp: 150, mp: 100, atk: 40, def: 15, spd: 30 },
+    desc: "An agile hunter with deadly precision and swift movements.",
+    skinTone: "#e8c8a0",
+  },
+  {
+    id: "assassin", name: "Shade", className: "Assassin", icon: "🗡️",
+    color: "#cc22cc", colorDark: "#660066", hairColor: "#1a1a2a",
+    stats: { hp: 110, mp: 120, atk: 60, def: 8, spd: 35 },
+    desc: "A shadowy figure striking from darkness with critical hits.",
+    skinTone: "#d4c0b0",
+  },
+];
+
+const ENEMIES = [
+  { id: "goblin", name: "Goblin", color: "#4a9a3a", size: 26, hp: 30, atk: 8, xp: 15 },
+  { id: "slime", name: "Slime", color: "#22cc66", size: 22, hp: 20, atk: 5, xp: 10 },
+  { id: "bat", name: "Bat", color: "#5a3080", size: 20, hp: 15, atk: 6, xp: 12 },
+  { id: "orc", name: "Orc", color: "#8a4a20", size: 36, hp: 60, atk: 18, xp: 30 },
+  { id: "skeleton", name: "Skeleton", color: "#d4c8a0", size: 30, hp: 40, atk: 14, xp: 22 },
+  { id: "wolf", name: "Wolf", color: "#6a6a6a", size: 28, hp: 35, atk: 16, xp: 20 },
+];
+
+const ITEMS = [
+  { id: "sword", icon: "⚔️", name: "Iron Sword", desc: "ATK +10", rarity: "common", color: "#aaa" },
+  { id: "shield", icon: "🛡️", name: "Oak Shield", desc: "DEF +8", rarity: "common", color: "#aa8c5a" },
+  { id: "potion", icon: "🧪", name: "HP Potion", desc: "+50 HP", rarity: "common", color: "#ff4444" },
+  { id: "mana", icon: "💎", name: "MP Crystal", desc: "+50 MP", rarity: "common", color: "#4444ff" },
+  { id: "ring", icon: "💍", name: "Power Ring", desc: "ATK +15", rarity: "rare", color: "#00d4ff" },
+  { id: "amulet", icon: "📿", name: "Guard Amulet", desc: "DEF +20", rarity: "rare", color: "#ffd700" },
+  { id: "staff", icon: "🔮", name: "Crystal Staff", desc: "MATK +25", rarity: "rare", color: "#b040ff" },
+  { id: "dagger", icon: "🗡️", name: "Shadow Dagger", desc: "ATK +22", rarity: "epic", color: "#ff00ff" },
+  { id: "armor", icon: "🦺", name: "Chainmail", desc: "DEF +15", rarity: "uncommon", color: "#888" },
+  { id: "boots", icon: "👢", name: "Swift Boots", desc: "SPD +12", rarity: "uncommon", color: "#6a4a2a" },
+  { id: "scroll", icon: "📜", name: "Skill Scroll", desc: "New Skill", rarity: "epic", color: "#ff8800" },
+  { id: "orb", icon: "🔵", name: "Mana Orb", desc: "MP +100", rarity: "epic", color: "#0088ff" },
+];
+
+const LANGUAGES = {
+  en: { name: "English", flag: "🇬🇧" },
+  id: { name: "Bahasa Indonesia", flag: "🇮🇩" },
+  ja: { name: "日本語", flag: "🇯🇵" },
 };
 
-const ENEMY_DATA = [
-  { id: "goblin",  label: "Goblin",      color: "#3f8c3f", size: 32 },
-  { id: "orc",     label: "Orc Warrior", color: "#6b3a1f", size: 48 },
-  { id: "slime",   label: "Slime",       color: "#1fa04a", size: 28 },
-  { id: "skeleton",label: "Skeleton",    color: "#c8bfa0", size: 36 },
-  { id: "bat",     label: "Bat",         color: "#4a2070", size: 24 },
-];
-
-const BOSS_DATA = [
-  { id: "dragon",   label: "Ancient Dragon", color: "#c0392b", size: 80 },
-  { id: "lich",     label: "Lich King",      color: "#8e44ad", size: 70 },
-  { id: "titan",    label: "Stone Titan",    color: "#7f8c8d", size: 90 },
-];
-
-const TABS = ["🌍 World", "🧝 Player", "✨ Skills", "👾 Enemies", "🐉 Bosses", "🐾 NPCs & Pets", "🌿 World & UI", "💥 FX Showcase"];
+const T = {
+  en: {
+    home: "Home", items: "Items", info: "Info", language: "Lang", about: "About",
+    play: "▶ PLAY", select: "Select Your Hero", choose: "Choose a character to begin",
+    back: "← Back", inv: "🎒 Inventory", animInfo: "📋 Animation System",
+    animDesc: "Frame-based animation state machine with procedural pixel art, particle FX, and smooth blending.",
+    states: "Animation States", skills: "Skills", enemies: "Enemies", bosses: "Bosses",
+    aboutTitle: "RPG Adventure", version: "v1.0.0",
+    engine: "React + Canvas 2D | Animation State Machine | Particle FX | Procedural Pixel Art",
+    victory: "VICTORY!", gameOver: "GAME OVER", score: "Score",
+    level: "Lv.", retry: "RETURN TO MENU",
+  },
+  id: {
+    home: "Beranda", items: "Item", info: "Info", language: "Bhs", about: "Tentang",
+    play: "▶ MAIN", select: "Pilih Karakter", choose: "Pilih karakter untuk memulai",
+    back: "← Kembali", inv: "🎒 Inventaris", animInfo: "📋 Sistem Animasi",
+    animDesc: "State machine animasi berbasis frame dengan pixel art prosedural, efek partikel, dan blending halus.",
+    states: "Status Animasi", skills: "Skill", enemies: "Musuh", bosses: "Boss",
+    aboutTitle: "RPG Adventure", version: "v1.0.0",
+    engine: "React + Canvas 2D | Animation State Machine | Particle FX | Pixel Art Prosedural",
+    victory: "MENANG!", gameOver: "GAME OVER", score: "Skor",
+    level: "Lv.", retry: "KEMBALI KE MENU",
+  },
+};
 
 // ============================================================
-// PIXEL HERO RENDERER
+// ENHANCED PIXEL CHARACTER RENDERER
 // ============================================================
-function drawPixelHero(ctx, x, y, scale, dir, frame, state) {
+function drawCharacter(ctx, x, y, scale, dir, frame, state, char) {
   ctx.save();
   ctx.translate(x, y);
   ctx.scale(scale, scale);
 
-  const skin = "#f5c5a0";
-  const hair = "#4a2c0a";
-  const armor = state === "hurt" || state === "knockback" ? "#ff4444" :
-                state === "death" ? "#555" :
-                state === "victory" ? "#f5a623" :
-                state.includes("skill") || state.includes("ult") ? "#b060ff" :
-                state.includes("attack") ? "#ff6644" : "#4a90d9";
-  const boot = "#2c1810";
-  const cape = state.includes("ult") ? "#ff2080" : "#8c1f1f";
+  const s = state;
+  const f = frame;
+  const skin = char.skinTone || "#f5c5a0";
+  const hair = char.hairColor || "#4a2c0a";
+  const armor = s.includes("hurt") ? "#ff4444" : s === "death" ? "#555" : s === "victory" ? "#ffd700" : char.color;
+  const armorDark = char.colorDark || "#882200";
+  const isMoving = s.includes("walk") || s.includes("run");
+  const isAttacking = s.includes("attack");
+  const isSkill = s.includes("skill");
+  const speed = s.includes("run") ? 1.5 : 1;
 
-  const bob = Math.sin(frame * 0.8) * (state.includes("walk") ? 2 : state.includes("run") ? 3 : 0.5);
+  // Body bob animation
+  const bob = Math.sin(f * 0.7 * speed) * (isMoving ? 3 : 0.5);
+  const armSwing = isMoving ? Math.cos(f * 0.7 * speed) * 6 : 0;
+  const legSwing = isMoving ? Math.sin(f * 0.7 * speed) * 5 : 0;
+  const attackPhase = isAttacking ? Math.sin(f * 0.5) * 8 : 0;
+  const skillPhase = isSkill ? Math.sin(f * 0.4) * 6 : 0;
+
+  // Shadow
+  ctx.save();
+  ctx.fillStyle = "rgba(0,0,0,0.3)";
+  ctx.beginPath();
+  ctx.ellipse(0, 18, 10, 3, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
 
   ctx.save();
   ctx.translate(0, bob);
 
-  // Cape
-  ctx.fillStyle = cape;
-  ctx.beginPath();
-  ctx.ellipse(0, 4, 5, 8 + Math.sin(frame * 0.4) * 2, 0, 0, Math.PI * 2);
-  ctx.fill();
-
-  // Legs
-  const legSwing = state.includes("walk") || state.includes("run") ? Math.sin(frame * 1.4) * (state.includes("run") ? 6 : 4) : 0;
-  ctx.fillStyle = armor;
-  ctx.fillRect(-5 - legSwing * 0.3, 10, 4, 8);
-  ctx.fillRect(1 + legSwing * 0.3, 10, 4, 8);
-  ctx.fillStyle = boot;
-  ctx.fillRect(-6 - legSwing * 0.3, 16, 5, 4);
-  ctx.fillRect(0 + legSwing * 0.3, 16, 5, 4);
-
-  // Body
-  ctx.fillStyle = armor;
-  ctx.fillRect(-6, 2, 12, 10);
-
-  // Arms
-  const armSwing = state.includes("walk") || state.includes("run") ? Math.cos(frame * 1.4) * 5 : 0;
-  const attackArm = state.includes("attack") ? Math.sin(frame * 2) * 15 - 10 : 0;
-  ctx.fillStyle = armor;
-  ctx.fillRect(-10, 2 + armSwing + attackArm, 4, 6);
-  ctx.fillRect(6, 2 - armSwing + attackArm, 4, 6);
-
-  // Glow if casting
-  if (state.includes("skill") || state.includes("ult") || state === "victory") {
-    ctx.save();
-    const glowColor = state.includes("ult") ? "#ff00ff" : state === "victory" ? "#ffd700" : "#a060ff";
-    ctx.shadowColor = glowColor;
-    ctx.shadowBlur = 20 + Math.sin(frame * 0.5) * 10;
-    ctx.fillStyle = glowColor;
-    ctx.globalAlpha = 0.3;
+  // --- CAPE / BACK ITEMS ---
+  if (char.id === "mage" || char.id === "assassin") {
+    ctx.fillStyle = char.id === "mage" ? "#6622aa" : "#1a1a2a";
     ctx.beginPath();
-    ctx.arc(0, 6, 14, 0, Math.PI * 2);
+    const capeWave = Math.sin(f * 0.3) * 3;
+    ctx.moveTo(-4, -2);
+    ctx.lineTo(-10 + capeWave, 14);
+    ctx.lineTo(4, 8);
+    ctx.lineTo(10 + capeWave, 14);
+    ctx.lineTo(4, -2);
+    ctx.closePath();
+    ctx.fill();
+  }
+
+  // --- LEGS ---
+  // Left leg
+  ctx.fillStyle = armorDark;
+  ctx.fillRect(-6 - legSwing * 0.5, 8, 5, 10);
+  // Right leg
+  ctx.fillStyle = armor;
+  ctx.fillRect(1 + legSwing * 0.5, 8, 5, 10);
+  // Boots
+  ctx.fillStyle = "#2c1810";
+  ctx.fillRect(-7 - legSwing * 0.5, 16, 6, 4);
+  ctx.fillRect(0 + legSwing * 0.5, 16, 6, 4);
+
+  // --- BODY / ARMOR ---
+  const bodyGrad = ctx.createLinearGradient(0, 0, 0, 10);
+  bodyGrad.addColorStop(0, armor);
+  bodyGrad.addColorStop(1, armorDark);
+  ctx.fillStyle = bodyGrad;
+  
+  // Torso shape
+  ctx.beginPath();
+  ctx.roundRect(-7, -2, 14, 12, 3);
+  ctx.fill();
+  
+  // Armor details
+  ctx.strokeStyle = "rgba(255,255,255,0.2)";
+  ctx.lineWidth = 0.5;
+  ctx.beginPath();
+  ctx.moveTo(-3, 0);
+  ctx.lineTo(-3, 8);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(3, 0);
+  ctx.lineTo(3, 8);
+  ctx.stroke();
+  
+  // Belt
+  ctx.fillStyle = "#8a6a3a";
+  ctx.fillRect(-7, 7, 14, 3);
+
+  // --- ARMS ---
+  // Left arm
+  ctx.fillStyle = armor;
+  ctx.save();
+  ctx.translate(-7, 0);
+  ctx.rotate(-0.3 - armSwing * 0.05 - attackPhase * 0.08);
+  ctx.fillRect(-2, 0, 5, 10);
+  // Hand
+  ctx.fillStyle = skin;
+  ctx.beginPath();
+  ctx.arc(0, 10, 3, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+
+  // Right arm (weapon arm)
+  ctx.fillStyle = armor;
+  ctx.save();
+  ctx.translate(7, 0);
+  const rightArmRot = 0.3 + armSwing * 0.05 + attackPhase * 0.1 + skillPhase * 0.06;
+  ctx.rotate(rightArmRot);
+  ctx.fillRect(-3, 0, 5, 10);
+  ctx.fillStyle = skin;
+  ctx.beginPath();
+  ctx.arc(0, 10, 3, 0, Math.PI * 2);
+  ctx.fill();
+  
+  // Weapon
+  if (isAttacking || isSkill || s === "victory") {
+    ctx.fillStyle = "#c0c0c0";
+    ctx.shadowColor = "#fff";
+    ctx.shadowBlur = isSkill ? 10 : 3;
+    ctx.fillRect(0, 6, 3, 16);
+    // Blade tip
+    ctx.fillStyle = "#e0e0e0";
+    ctx.beginPath();
+    ctx.moveTo(0, 6);
+    ctx.lineTo(1.5, -2);
+    ctx.lineTo(3, 6);
+    ctx.closePath();
+    ctx.fill();
+    // Guard
+    ctx.fillStyle = "#f5a623";
+    ctx.fillRect(-3, 6, 9, 3);
+    ctx.shadowBlur = 0;
+  } else if (char.id === "mage") {
+    // Staff
+    ctx.fillStyle = "#8a5a2a";
+    ctx.fillRect(-1, -5, 3, 18);
+    ctx.fillStyle = "#b040ff";
+    ctx.shadowColor = "#b040ff";
+    ctx.shadowBlur = 8;
+    ctx.beginPath();
+    ctx.arc(0, -5, 5, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+  } else if (char.id === "archer") {
+    // Bow on back hint
+    ctx.fillStyle = "#6a4a2a";
+    ctx.fillRect(-6, -8, 2, 14);
+  }
+  ctx.restore();
+
+  // --- HEAD ---
+  // Neck
+  ctx.fillStyle = skin;
+  ctx.fillRect(-3, -6, 6, 4);
+  
+  // Head
+  ctx.beginPath();
+  ctx.arc(0, -10, 7, 0, Math.PI * 2);
+  ctx.fill();
+  
+  // Hair back
+  ctx.fillStyle = hair;
+  ctx.beginPath();
+  ctx.arc(0, -11, 7.5, Math.PI, 0);
+  ctx.fill();
+  ctx.fillRect(-7, -15, 14, 7);
+  
+  // Hair strands
+  ctx.fillStyle = hair;
+  if (char.id === "mage") {
+    // Long hair
+    ctx.fillRect(-7, -15, 3, 12);
+    ctx.fillRect(4, -15, 3, 12);
+  }
+  
+  // Eyes
+  const eyeY = s === "hurt" ? -9 : s === "death" ? -7 : -11;
+  ctx.fillStyle = "#fff";
+  ctx.fillRect(-5, eyeY, 4, 3);
+  ctx.fillRect(1, eyeY, 4, 3);
+  // Pupils
+  ctx.fillStyle = s === "death" ? "#888" : char.id === "assassin" ? "#ff0000" : char.id === "mage" ? "#6600ff" : "#222";
+  const lookDir = dir === "left" ? -1 : dir === "right" ? 1 : 0;
+  ctx.fillRect(-4 + lookDir, eyeY + 0.5, 2, 2);
+  ctx.fillRect(2 + lookDir, eyeY + 0.5, 2, 2);
+  
+  // Eyebrows
+  ctx.fillStyle = hair;
+  ctx.fillRect(-5, eyeY - 2, 4, 1.5);
+  ctx.fillRect(1, eyeY - 2, 4, 1.5);
+  
+  // Mouth
+  ctx.fillStyle = "#c08070";
+  if (s === "hurt") {
+    ctx.fillRect(-2, -5, 4, 2);
+  } else if (s === "victory") {
+    ctx.beginPath();
+    ctx.arc(0, -5, 2, 0, Math.PI);
+    ctx.fill();
+  } else {
+    ctx.fillRect(-2, -6, 4, 1.5);
+  }
+
+  ctx.restore(); // bob
+
+  // --- EFFECTS OVERLAY ---
+  if (isSkill) {
+    ctx.save();
+    const glowColor = char.id === "mage" ? "#b040ff" : char.id === "warrior" ? "#ff8800" : "#00d4ff";
+    ctx.shadowColor = glowColor;
+    ctx.shadowBlur = 20 + Math.sin(f * 0.5) * 10;
+    ctx.fillStyle = glowColor;
+    ctx.globalAlpha = 0.25 + Math.sin(f * 0.4) * 0.1;
+    ctx.beginPath();
+    ctx.arc(0, 4, 16, 0, Math.PI * 2);
     ctx.fill();
     ctx.restore();
   }
-
-  // Head
-  ctx.fillStyle = skin;
-  ctx.beginPath();
-  ctx.arc(0, -4, 6, 0, Math.PI * 2);
-  ctx.fill();
-
-  // Hair
-  ctx.fillStyle = hair;
-  ctx.fillRect(-6, -9, 12, 5);
-  ctx.beginPath();
-  ctx.arc(0, -9, 5, Math.PI, 0);
-  ctx.fill();
-
-  // Eyes
-  ctx.fillStyle = "#222";
-  if (dir !== "up") {
-    const eyeY = state === "hurt" || state === "death" ? -2 : -4;
-    ctx.fillRect(-3, eyeY, 2, state === "hurt" ? 1 : 2);
-    ctx.fillRect(1, eyeY, 2, state === "hurt" ? 1 : 2);
+  
+  if (s === "victory") {
+    // Sparkles
+    for (let i = 0; i < 6; i++) {
+      const angle = (f * 0.1 + i * 1.05);
+      const dist = 14 + Math.sin(f * 0.2 + i) * 4;
+      ctx.fillStyle = ["#ffd700", "#fff", "#ff8800", "#ffff00"][i % 4];
+      ctx.beginPath();
+      ctx.arc(Math.cos(angle) * dist, Math.sin(angle) * dist - 8, 2, 0, Math.PI * 2);
+      ctx.fill();
+    }
   }
 
-  // Weapon for attack
-  if (state.includes("attack") || state === "dash") {
-    ctx.save();
-    ctx.rotate(attackArm * 0.05 - 0.3);
-    ctx.fillStyle = "#c0c0c0";
-    ctx.fillRect(8, -6, 3, 16);
-    ctx.fillStyle = "#f5a623";
-    ctx.fillRect(6, -2, 7, 2);
-    ctx.restore();
-  }
-
-  ctx.restore();
-  ctx.restore();
+  ctx.restore(); // main
 }
 
 // ============================================================
-// WORLD GAMEPLAY COMPONENT
+// JOYSTICK COMPONENT
 // ============================================================
-function WorldGameplay({ onAnimationChange }) {
+function Joystick({ onMove }) {
+  const baseRef = useRef(null);
+  const thumbRef = useRef(null);
+  const activeRef = useRef(false);
+  const baseRect = useRef(null);
+
+  const getPos = (e) => {
+    const touch = e.touches ? e.touches[0] : e;
+    return { x: touch.clientX, y: touch.clientY };
+  };
+
+  const handleStart = useCallback((e) => {
+    e.preventDefault();
+    activeRef.current = true;
+    baseRect.current = baseRef.current.getBoundingClientRect();
+    const pos = getPos(e);
+    updateThumb(pos);
+  }, [onMove]);
+
+  const handleMove = useCallback((e) => {
+    if (!activeRef.current) return;
+    e.preventDefault();
+    const pos = getPos(e);
+    updateThumb(pos);
+  }, [onMove]);
+
+  const handleEnd = useCallback((e) => {
+    e.preventDefault();
+    activeRef.current = false;
+    if (thumbRef.current) {
+      thumbRef.current.style.transform = "translate(-50%, -50%)";
+    }
+    onMove(0, 0);
+  }, [onMove]);
+
+  const updateThumb = (pos) => {
+    if (!baseRect.current || !thumbRef.current) return;
+    const cx = baseRect.current.left + baseRect.current.width / 2;
+    const cy = baseRect.current.top + baseRect.current.height / 2;
+    const maxR = baseRect.current.width / 2 - 25;
+    let dx = pos.x - cx;
+    let dy = pos.y - cy;
+    const dist = Math.hypot(dx, dy);
+    if (dist > maxR) {
+      dx = (dx / dist) * maxR;
+      dy = (dy / dist) * maxR;
+    }
+    thumbRef.current.style.transform = `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))`;
+    onMove(dx / maxR, dy / maxR);
+  };
+
+  return (
+    <div
+      className="joystick-container"
+      ref={baseRef}
+      onMouseDown={handleStart}
+      onMouseMove={handleMove}
+      onMouseUp={handleEnd}
+      onMouseLeave={handleEnd}
+      onTouchStart={handleStart}
+      onTouchMove={handleMove}
+      onTouchEnd={handleEnd}
+    >
+      <div className="joystick-base">
+        <div className="joystick-thumb" ref={thumbRef} />
+      </div>
+    </div>
+  );
+}
+
+// ============================================================
+// GAME WORLD
+// ============================================================
+function GameWorld({ character, onBack, t }) {
   const canvasRef = useRef(null);
-  const playerPos = useRef({ x: 400, y: 200 });
-  const playerDir = useRef("down");
-  const playerState = useRef("idle_down");
+  const playerRef = useRef({
+    x: 450, y: 250,
+    dir: "down",
+    state: "idle_down",
+    hp: character.stats.hp,
+    maxHp: character.stats.hp,
+    mp: character.stats.mp,
+    maxMp: character.stats.mp,
+    level: 1,
+    xp: 0,
+    nextXp: 50,
+  });
   const frameRef = useRef(0);
-  const keys = useRef({});
-  const running = useRef(false);
-  const attacking = useRef(false);
   const animRef = useRef(null);
-  const enemiesRef = useRef([
-    { id: "gob1", type: "goblin", x: 200, y: 150, hp: 30 },
-    { id: "slime1", type: "slime", x: 550, y: 200, hp: 20 },
-    { id: "bat1", type: "bat", x: 650, y: 100, hp: 15 },
-    { id: "orc1", type: "orc", x: 350, y: 300, hp: 50 },
-    { id: "skel1", type: "skeleton", x: 700, y: 280, hp: 25 },
-  ]);
+  const enemiesRef = useRef([]);
+  const particlesRef = useRef([]);
+  const damageNumbersRef = useRef([]);
+  const skillCooldownsRef = useRef({});
+  const [hud, setHud] = useState({
+    hp: character.stats.hp,
+    maxHp: character.stats.hp,
+    mp: character.stats.mp,
+    maxMp: character.stats.mp,
+    level: 1,
+    xp: 0,
+    nextXp: 50,
+    score: 0,
+    state: "idle_down",
+  });
+  const [cooldowns, setCooldowns] = useState({});
+  const [gameOver, setGameOver] = useState(false);
+  const [victory, setVictory] = useState(false);
 
+  // Initialize enemies
   useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext("2d");
-
-    const handleKeyDown = (e) => {
-      keys.current[e.key] = true;
-      if (e.key === " " || e.key === "Spacebar") {
-        e.preventDefault();
-        if (!attacking.current) {
-          attacking.current = true;
-          playerState.current = "attack1";
-          onAnimationChange && onAnimationChange("attack1");
-          setTimeout(() => {
-            attacking.current = false;
-          }, 400);
-        }
-      }
-      if (e.key === "r" || e.key === "R") {
-        running.current = !running.current;
-      }
-    };
-    const handleKeyUp = (e) => { keys.current[e.key] = false; };
-    window.addEventListener("keydown", handleKeyDown);
-    window.addEventListener("keyup", handleKeyUp);
-
-    const gameLoop = () => {
-      const k = keys.current;
-      let dx = 0, dy = 0;
-      if (k["ArrowUp"] || k["w"]) dy -= 1;
-      if (k["ArrowDown"] || k["s"]) dy += 1;
-      if (k["ArrowLeft"] || k["a"]) dx -= 1;
-      if (k["ArrowRight"] || k["d"]) dx += 1;
-      
-      const speed = 2.5 * (running.current ? 1.8 : 1);
-      if (dx !== 0 || dy !== 0) {
-        const len = Math.sqrt(dx*dx+dy*dy);
-        dx /= len; dy /= len;
-        playerPos.current.x += dx * speed;
-        playerPos.current.y += dy * speed;
-        playerPos.current.x = Math.max(30, Math.min(870, playerPos.current.x));
-        playerPos.current.y = Math.max(30, Math.min(370, playerPos.current.y));
-        
-        if (!attacking.current) {
-          if (Math.abs(dx) > Math.abs(dy)) playerDir.current = dx > 0 ? "right" : "left";
-          else playerDir.current = dy > 0 ? "down" : "up";
-          const base = running.current ? "run" : "walk";
-          const newState = `${base}_${playerDir.current}`;
-          playerState.current = newState;
-          onAnimationChange && onAnimationChange(newState);
-        }
-      } else {
-        if (!attacking.current) {
-          const newState = `idle_${playerDir.current}`;
-          playerState.current = newState;
-          onAnimationChange && onAnimationChange(newState);
-        }
-      }
-
-      // Draw world
-      ctx.clearRect(0, 0, 900, 400);
-      
-      // Sky gradient
-      const skyGrad = ctx.createLinearGradient(0, 0, 0, 400);
-      skyGrad.addColorStop(0, "#1a2a4a");
-      skyGrad.addColorStop(0.6, "#2a4a3a");
-      skyGrad.addColorStop(1, "#1a3a1a");
-      ctx.fillStyle = skyGrad;
-      ctx.fillRect(0, 0, 900, 400);
-
-      // Ground
-      ctx.fillStyle = "#2a5a2a";
-      ctx.fillRect(0, 320, 900, 80);
-      ctx.fillStyle = "#1a4a1a";
-      ctx.fillRect(0, 340, 900, 60);
-
-      // Path
-      ctx.fillStyle = "#8a7a5a";
-      ctx.beginPath();
-      ctx.moveTo(0, 350);
-      ctx.quadraticCurveTo(450, 300, 900, 340);
-      ctx.lineTo(900, 370);
-      ctx.quadraticCurveTo(450, 330, 0, 380);
-      ctx.closePath();
-      ctx.fill();
-
-      // Trees
-      [80, 250, 450, 650, 820].forEach((tx, i) => {
-        const ty = 260 + Math.sin(i * 1.5) * 30;
-        ctx.fillStyle = "#3a2a1a";
-        ctx.fillRect(tx - 4, ty, 8, 50);
-        ctx.fillStyle = "#1a5a1a";
-        ctx.beginPath();
-        ctx.arc(tx, ty - 10, 22, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.fillStyle = "#2a7a2a";
-        ctx.beginPath();
-        ctx.arc(tx, ty - 20, 16, 0, Math.PI * 2);
-        ctx.fill();
-      });
-
-      // Rocks
-      ctx.fillStyle = "#6a6a6a";
-      [150, 500, 750].forEach(rx => {
-        ctx.beginPath();
-        ctx.ellipse(rx, 330, 15, 8, 0, 0, Math.PI * 2);
-        ctx.fill();
-      });
-
-      // Draw enemies
-      enemiesRef.current.forEach(enemy => {
-        const data = ENEMY_DATA.find(e => e.id === enemy.type) || ENEMY_DATA[0];
-        const bob = Math.sin(frameRef.current * 0.05 + enemy.x) * 2;
-        
-        // Shadow
-        ctx.fillStyle = "rgba(0,0,0,0.3)";
-        ctx.beginPath();
-        ctx.ellipse(enemy.x, enemy.y + data.size/2 + 2, data.size/2, 4, 0, 0, Math.PI * 2);
-        ctx.fill();
-        
-        // Body
-        ctx.fillStyle = data.color;
-        ctx.shadowColor = data.color;
-        ctx.shadowBlur = 8;
-        ctx.beginPath();
-        if (enemy.type === "slime") {
-          ctx.arc(enemy.x, enemy.y + bob, data.size/2, 0, Math.PI * 2);
-        } else if (enemy.type === "bat") {
-          const wingFlap = Math.sin(frameRef.current * 0.1 + enemy.x) * 8;
-          ctx.arc(enemy.x, enemy.y + bob, data.size/3, 0, Math.PI * 2);
-          ctx.beginPath();
-          ctx.ellipse(enemy.x - 10, enemy.y - 5 + wingFlap, 12, 6, -0.3, 0, Math.PI * 2);
-          ctx.fill();
-          ctx.beginPath();
-          ctx.ellipse(enemy.x + 10, enemy.y - 5 - wingFlap, 12, 6, 0.3, 0, Math.PI * 2);
-        } else {
-          ctx.rect(enemy.x - data.size/3, enemy.y - data.size/2 + bob, data.size*2/3, data.size/2);
-          ctx.beginPath();
-          ctx.arc(enemy.x, enemy.y - data.size/2 + bob, data.size/3, 0, Math.PI * 2);
-        }
-        ctx.fill();
-        ctx.shadowBlur = 0;
-        
-        // HP bar
-        ctx.fillStyle = "rgba(0,0,0,0.6)";
-        ctx.fillRect(enemy.x - 15, enemy.y - data.size/2 - 15, 30, 4);
-        ctx.fillStyle = enemy.hp > 20 ? "#39ff14" : enemy.hp > 10 ? "#ffaa00" : "#ff2244";
-        ctx.fillRect(enemy.x - 15, enemy.y - data.size/2 - 15, 30 * (enemy.hp / 50), 4);
-      });
-
-      // Draw player
-      drawPixelHero(ctx, playerPos.current.x, playerPos.current.y, 2.0, playerDir.current, frameRef.current * 0.3, playerState.current);
-      
-      frameRef.current++;
-      animRef.current = requestAnimationFrame(gameLoop);
-    };
-    animRef.current = requestAnimationFrame(gameLoop);
-    
-    return () => {
-      window.removeEventListener("keydown", handleKeyDown);
-      window.removeEventListener("keyup", handleKeyUp);
-      cancelAnimationFrame(animRef.current);
-    };
+    enemiesRef.current = [
+      { id: 1, type: "goblin", x: 200, y: 150, hp: 30, maxHp: 30 },
+      { id: 2, type: "slime", x: 600, y: 200, hp: 20, maxHp: 20 },
+      { id: 3, type: "bat", x: 700, y: 80, hp: 15, maxHp: 15 },
+      { id: 4, type: "orc", x: 350, y: 320, hp: 60, maxHp: 60 },
+      { id: 5, type: "skeleton", x: 750, y: 300, hp: 40, maxHp: 40 },
+      { id: 6, type: "wolf", x: 500, y: 100, hp: 35, maxHp: 35 },
+      { id: 7, type: "goblin", x: 100, y: 300, hp: 30, maxHp: 30 },
+      { id: 8, type: "slime", x: 800, y: 150, hp: 20, maxHp: 20 },
+    ];
   }, []);
 
-  return <canvas ref={canvasRef} id="worldCanvas" width={900} height={400} style={{ width: "100%", height: "100%" }} />;
-}
-
-// ============================================================
-// SKILL EFFECT CANVAS
-// ============================================================
-function SkillCanvas({ skill, playing }) {
-  const canvasRef = useRef(null);
-  const particlesRef = useRef([]);
-  const rafRef = useRef(null);
-
-  const spawnParticle = useCallback((cfg) => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const cx = cfg.cx ?? canvas.width / 2;
-    const cy = cfg.cy ?? canvas.height / 2;
-    const count = cfg.count ?? 20;
+  const spawnParticles = useCallback((x, y, color, count = 15, type = "circle") => {
     for (let i = 0; i < count; i++) {
-      const angle = (Math.PI * 2 * i) / count + (Math.random() - 0.5) * 0.5;
-      const speed = cfg.speed ?? (1 + Math.random() * 3);
+      const angle = Math.random() * Math.PI * 2;
+      const speed = 1 + Math.random() * 4;
       particlesRef.current.push({
-        x: cx + (Math.random() - 0.5) * (cfg.spread ?? 10),
-        y: cy + (Math.random() - 0.5) * (cfg.spread ?? 10),
-        vx: Math.cos(angle) * speed * (0.5 + Math.random()),
-        vy: Math.sin(angle) * speed * (0.5 + Math.random()),
+        x, y,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed - 1,
         life: 1,
-        decay: 0.015 + Math.random() * 0.025,
-        size: (cfg.minSize ?? 2) + Math.random() * (cfg.maxSize ?? 4),
-        color: cfg.colors ? cfg.colors[Math.floor(Math.random() * cfg.colors.length)] : "#fff",
-        gravity: cfg.gravity ?? 0.05,
+        decay: 0.015 + Math.random() * 0.03,
+        color,
+        size: 1.5 + Math.random() * 3,
+        type,
       });
     }
   }, []);
 
+  const spawnDamage = useCallback((x, y, value, isCrit = false) => {
+    damageNumbersRef.current.push({
+      x, y,
+      value,
+      life: 1,
+      decay: 0.02,
+      isCrit,
+      id: Date.now() + Math.random(),
+    });
+  }, []);
+
+  const useSkill = useCallback((skillId) => {
+    const player = playerRef.current;
+    const skill = SKILLS.find(s => s.id === skillId);
+    if (!skill) return;
+    if (player.mp < skill.mp) return;
+    if (skillCooldownsRef.current[skillId] > Date.now()) return;
+
+    player.mp -= skill.mp;
+    skillCooldownsRef.current[skillId] = Date.now() + skill.cooldown;
+    player.state = skillId;
+    setCooldowns(prev => ({ ...prev, [skillId]: skill.cooldown }));
+
+    // Animate cooldown
+    const interval = setInterval(() => {
+      const remaining = skillCooldownsRef.current[skillId] - Date.now();
+      if (remaining <= 0) {
+        clearInterval(interval);
+        setCooldowns(prev => ({ ...prev, [skillId]: 0 }));
+      } else {
+        setCooldowns(prev => ({ ...prev, [skillId]: remaining }));
+      }
+    }, 100);
+
+    // Skill effect
+    spawnParticles(player.x, player.y, skill.color, 30, "spark");
+    
+    // Damage enemies in range
+    const range = skill.id === "skill3" ? 150 : 80;
+    enemiesRef.current.forEach(enemy => {
+      const edata = ENEMIES.find(e => e.id === enemy.type);
+      if (!edata) return;
+      const dist = Math.hypot(player.x - enemy.x, player.y - enemy.y);
+      if (dist < range) {
+        const dmg = Math.floor(character.stats.atk * skill.damage);
+        enemy.hp -= dmg;
+        spawnParticles(enemy.x, enemy.y, skill.color, 20, "circle");
+        spawnDamage(enemy.x, enemy.y, dmg);
+        if (enemy.hp <= 0) {
+          player.xp += edata.xp;
+          setHud(prev => {
+            const newXp = prev.xp + edata.xp;
+            if (newXp >= prev.nextXp) {
+              player.level++;
+              player.maxHp += 20;
+              player.hp = player.maxHp;
+              player.maxMp += 15;
+              player.mp = player.maxMp;
+              return {
+                ...prev,
+                xp: newXp - prev.nextXp,
+                nextXp: Math.floor(prev.nextXp * 1.5),
+                level: player.level,
+                hp: player.hp,
+                maxHp: player.maxHp,
+                mp: player.mp,
+                maxMp: player.maxMp,
+              };
+            }
+            return { ...prev, xp: newXp };
+          });
+          enemy.hp = enemy.maxHp;
+          enemy.x = Math.random() * 800 + 50;
+          enemy.y = Math.random() * 350 + 50;
+          spawnParticles(enemy.x, enemy.y, "#ffd700", 25, "circle");
+          setHud(prev => ({ ...prev, score: prev.score + edata.xp }));
+        }
+      }
+    });
+
+    setTimeout(() => {
+      if (player.state === skillId) {
+        player.state = `idle_${player.dir}`;
+      }
+    }, 600);
+  }, [character, spawnParticles, spawnDamage]);
+
+  const attack = useCallback(() => {
+    const player = playerRef.current;
+    if (player.state.includes("attack") || player.state.includes("skill")) return;
+    player.state = Math.random() > 0.5 ? "attack1" : "attack2";
+    
+    const range = 40;
+    enemiesRef.current.forEach(enemy => {
+      const edata = ENEMIES.find(e => e.id === enemy.type);
+      if (!edata) return;
+      const dist = Math.hypot(player.x - enemy.x, player.y - enemy.y);
+      if (dist < range + edata.size) {
+        const isCrit = Math.random() < 0.15;
+        const dmg = Math.floor(character.stats.atk * (isCrit ? 2 : 1));
+        enemy.hp -= dmg;
+        spawnParticles(enemy.x, enemy.y, edata.color, 12, "circle");
+        spawnDamage(enemy.x, enemy.y, dmg, isCrit);
+        if (enemy.hp <= 0) {
+          player.xp += edata.xp;
+          setHud(prev => {
+            const newXp = prev.xp + edata.xp;
+            if (newXp >= prev.nextXp) {
+              player.level++;
+              player.maxHp += 20;
+              player.hp = player.maxHp;
+              player.maxMp += 15;
+              player.mp = player.maxMp;
+              spawnParticles(player.x, player.y, "#ffd700", 40, "spark");
+              return {
+                ...prev,
+                xp: newXp - prev.nextXp,
+                nextXp: Math.floor(prev.nextXp * 1.5),
+                level: player.level,
+                hp: player.hp,
+                maxHp: player.maxHp,
+                mp: player.mp,
+                maxMp: player.maxMp,
+              };
+            }
+            return { ...prev, xp: newXp };
+          });
+          enemy.hp = enemy.maxHp;
+          enemy.x = Math.random() * 800 + 50;
+          enemy.y = Math.random() * 350 + 50;
+          spawnParticles(enemy.x, enemy.y, "#ffd700", 25, "circle");
+          setHud(prev => ({ ...prev, score: prev.score + edata.xp }));
+        }
+      }
+    });
+
+    setTimeout(() => {
+      if (player.state.includes("attack")) {
+        player.state = `idle_${player.dir}`;
+      }
+    }, 450);
+  }, [character, spawnParticles, spawnDamage]);
+
+  // Joystick movement handler
+  const handleJoystickMove = useCallback((dx, dy) => {
+    const player = playerRef.current;
+    if (gameOver || victory) return;
+    const speed = 3;
+    player.x += dx * speed;
+    player.y += dy * speed;
+    player.x = Math.max(25, Math.min(875, player.x));
+    player.y = Math.max(25, Math.min(425, player.y));
+    
+    if (Math.abs(dx) > 0.1 || Math.abs(dy) > 0.1) {
+      if (Math.abs(dx) > Math.abs(dy)) player.dir = dx > 0 ? "right" : "left";
+      else player.dir = dy > 0 ? "down" : "up";
+      if (!player.state.includes("attack") && !player.state.includes("skill") && !player.state.includes("hurt")) {
+        player.state = `run_${player.dir}`;
+      }
+    } else {
+      if (!player.state.includes("attack") && !player.state.includes("skill") && !player.state.includes("hurt")) {
+        player.state = `idle_${player.dir}`;
+      }
+    }
+  }, [gameOver, victory]);
+
+  // Keyboard handler
   useEffect(() => {
-    if (!playing) return;
+    const keys = {};
+    const handleKeyDown = (e) => {
+      keys[e.key] = true;
+      if (e.key === " " || e.key === "Spacebar") {
+        e.preventDefault();
+        attack();
+      }
+      if (e.key === "1") useSkill("skill1");
+      if (e.key === "2") useSkill("skill2");
+      if (e.key === "3") useSkill("skill3");
+    };
+    const handleKeyUp = (e) => { keys[e.key] = false; };
+    window.addEventListener("keydown", handleKeyDown);
+    window.addEventListener("keyup", handleKeyUp);
+
+    const keyInterval = setInterval(() => {
+      const player = playerRef.current;
+      if (gameOver || victory) return;
+      if (player.state.includes("attack") || player.state.includes("skill") || player.state.includes("hurt")) return;
+      
+      let dx = 0, dy = 0;
+      if (keys["ArrowUp"] || keys["w"]) dy = -1;
+      if (keys["ArrowDown"] || keys["s"]) dy = 1;
+      if (keys["ArrowLeft"] || keys["a"]) dx = -1;
+      if (keys["ArrowRight"] || keys["d"]) dx = 1;
+      
+      if (dx !== 0 || dy !== 0) {
+        const speed = 3;
+        const len = Math.sqrt(dx*dx + dy*dy);
+        player.x += (dx/len) * speed;
+        player.y += (dy/len) * speed;
+        player.x = Math.max(25, Math.min(875, player.x));
+        player.y = Math.max(25, Math.min(425, player.y));
+        if (Math.abs(dx) > Math.abs(dy)) player.dir = dx > 0 ? "right" : "left";
+        else player.dir = dy > 0 ? "down" : "up";
+        player.state = `run_${player.dir}`;
+      } else {
+        player.state = `idle_${player.dir}`;
+      }
+    }, 16);
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("keyup", handleKeyUp);
+      clearInterval(keyInterval);
+    };
+  }, [attack, useSkill, gameOver, victory]);
+
+  // MP regen
+  useEffect(() => {
+    const regenInterval = setInterval(() => {
+      const player = playerRef.current;
+      if (player.mp < player.maxMp) {
+        player.mp = Math.min(player.maxMp, player.mp + 1);
+        setHud(prev => ({ ...prev, mp: player.mp }));
+      }
+    }, 500);
+    return () => clearInterval(regenInterval);
+  }, []);
+
+  // Main game loop
+  useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
-    const cx = canvas.width / 2;
-    const cy = canvas.height / 2;
-    let tick = 0;
-
-    const configs = {
-      fireball: [
-        { t: 0,  fn: () => spawnParticle({ cx, cy: cy+20, count: 8, colors: ["#ff4500","#ff8c00","#ffcc00"], spread: 5, speed: 0.5, minSize: 3, maxSize: 6 }) },
-        { t: 20, fn: () => spawnParticle({ cx: cx-40, cy, count: 30, colors: ["#ff4500","#ff6a00","#ffcc00","#fff"], spread: 3, speed: 4, gravity: -0.02, minSize: 2, maxSize: 5 }) },
-        { t: 50, fn: () => spawnParticle({ cx, cy, count: 60, colors: ["#ff2200","#ff6a00","#ffcc00","#fff","#ff4500"], spread: 20, speed: 5, gravity: 0.08, minSize: 3, maxSize: 8 }) },
-      ],
-      ice_blast: [
-        { t: 0,  fn: () => spawnParticle({ cx, cy, count: 15, colors: ["#00d4ff","#80e8ff","#ffffff"], spread: 8, speed: 0.8, gravity: -0.01, minSize: 2, maxSize: 4 }) },
-        { t: 25, fn: () => spawnParticle({ cx, cy, count: 40, colors: ["#00d4ff","#80e8ff","#b0f4ff","#ffffff"], spread: 30, speed: 4, gravity: 0.03, minSize: 1, maxSize: 3 }) },
-      ],
-      thunder: [
-        { t: 0,  fn: () => spawnParticle({ cx, cy: cy-60, count: 5, colors: ["#ffe000","#fff380","#ffffff"], spread: 3, speed: 1, gravity: 0.2, minSize: 2, maxSize: 3 }) },
-        { t: 15, fn: () => spawnParticle({ cx, cy, count: 50, colors: ["#ffe000","#fff380","#ffffff","#aaaaff"], spread: 5, speed: 6, gravity: 0.1, minSize: 1, maxSize: 3 }) },
-      ],
-      meteor: [
-        { t: 0,  fn: () => spawnParticle({ cx: cx-50, cy: cy-70, count: 10, colors: ["#ff6a00","#ffa040","#ffcc00"], spread: 8, speed: 1, gravity: 0.0, minSize: 3, maxSize: 6 }) },
-        { t: 20, fn: () => spawnParticle({ cx, cy: cy+10, count: 80, colors: ["#ff4500","#ff6a00","#ffcc00","#fff","#ff2200"], spread: 40, speed: 6, gravity: 0.1, minSize: 2, maxSize: 9 }) },
-      ],
-      healing: [
-        { t: 0,  fn: () => spawnParticle({ cx, cy, count: 20, colors: ["#39ff14","#80ff80","#ffffff","#b0ffb0"], spread: 35, speed: 1.5, gravity: -0.04, minSize: 2, maxSize: 5 }) },
-        { t: 20, fn: () => spawnParticle({ cx, cy, count: 30, colors: ["#39ff14","#ffffff","#c0ffc0"], spread: 20, speed: 2, gravity: -0.06, minSize: 3, maxSize: 6 }) },
-      ],
-    };
-
-    const myConfigs = configs[skill] || configs.fireball;
+    const W = 900, H = 450;
 
     const loop = () => {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      tick++;
+      ctx.clearRect(0, 0, W, H);
+      const player = playerRef.current;
+
+      // Background
+      const skyGrad = ctx.createLinearGradient(0, 0, 0, H);
+      skyGrad.addColorStop(0, "#1a2a4a");
+      skyGrad.addColorStop(0.4, "#2a3a5a");
+      skyGrad.addColorStop(0.7, "#2a4a3a");
+      skyGrad.addColorStop(1, "#1a3a1a");
+      ctx.fillStyle = skyGrad;
+      ctx.fillRect(0, 0, W, H);
+
+      // Stars
+      for (let i = 0; i < 30; i++) {
+        const sx = (i * 37 + 13) % W;
+        const sy = (i * 23 + 7) % (H * 0.4);
+        ctx.fillStyle = `rgba(255,255,255,${0.3 + Math.sin(frameRef.current * 0.02 + i) * 0.3})`;
+        ctx.fillRect(sx, sy, 1.5, 1.5);
+      }
+
+      // Mountains
+      ctx.fillStyle = "#1a2a3a";
+      ctx.beginPath();
+      ctx.moveTo(0, 350);
+      ctx.lineTo(100, 250);
+      ctx.lineTo(250, 320);
+      ctx.lineTo(400, 220);
+      ctx.lineTo(550, 300);
+      ctx.lineTo(700, 240);
+      ctx.lineTo(900, 310);
+      ctx.lineTo(900, 450);
+      ctx.lineTo(0, 450);
+      ctx.closePath();
+      ctx.fill();
+
+      // Ground
+      ctx.fillStyle = "#2a5a2a";
+      ctx.fillRect(0, 360, W, 90);
       
-      for (const cfg of myConfigs) {
-        if (tick === cfg.t) cfg.fn();
+      // Grass details
+      ctx.fillStyle = "#3a7a3a";
+      for (let i = 0; i < W; i += 30) {
+        ctx.fillRect(i, 358, 15, 4);
       }
       
+      // Path
+      ctx.fillStyle = "#8a7a5a";
+      ctx.beginPath();
+      ctx.moveTo(0, 380);
+      ctx.quadraticCurveTo(W/2, 350, W, 370);
+      ctx.lineTo(W, 400);
+      ctx.quadraticCurveTo(W/2, 380, 0, 410);
+      ctx.closePath();
+      ctx.fill();
+
+      // Trees
+      [60, 180, 320, 480, 620, 780].forEach((tx, i) => {
+        const ty = 300 + Math.sin(i * 1.5) * 20;
+        const sway = Math.sin(frameRef.current * 0.02 + i) * 3;
+        ctx.save();
+        ctx.translate(sway, 0);
+        ctx.fillStyle = "#4a2a1a";
+        ctx.fillRect(tx - 5, ty, 10, 50);
+        // Canopy layers
+        ctx.fillStyle = "#1a5a1a";
+        ctx.beginPath();
+        ctx.moveTo(tx, ty - 30);
+        ctx.lineTo(tx - 25, ty + 5);
+        ctx.lineTo(tx + 25, ty + 5);
+        ctx.closePath();
+        ctx.fill();
+        ctx.fillStyle = "#2a7a2a";
+        ctx.beginPath();
+        ctx.moveTo(tx, ty - 20);
+        ctx.lineTo(tx - 18, ty + 2);
+        ctx.lineTo(tx + 18, ty + 2);
+        ctx.closePath();
+        ctx.fill();
+        ctx.restore();
+      });
+
+      // Bushes
+      [120, 400, 650, 820].forEach(bx => {
+        ctx.fillStyle = "#2a6a2a";
+        ctx.beginPath();
+        ctx.arc(bx, 355, 12, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = "#3a8a3a";
+        ctx.beginPath();
+        ctx.arc(bx + 6, 352, 8, 0, Math.PI * 2);
+        ctx.fill();
+      });
+
+      // Flowers
+      [90, 280, 520, 700].forEach(fx => {
+        ctx.fillStyle = ["#ff6688", "#ffaa44", "#ffdd88", "#ff88aa"][Math.floor(fx/100) % 4];
+        ctx.beginPath();
+        ctx.arc(fx, 358, 3, 0, Math.PI * 2);
+        ctx.fill();
+      });
+
+      // Enemy AI + Draw
+      enemiesRef.current.forEach(enemy => {
+        const edata = ENEMIES.find(e => e.id === enemy.type);
+        if (!edata) return;
+        
+        // AI Movement
+        const dist = Math.hypot(player.x - enemy.x, player.y - enemy.y);
+        if (dist < 250 && dist > edata.size) {
+          const angle = Math.atan2(player.y - enemy.y, player.x - enemy.x);
+          const speed = enemy.type === "bat" ? 1.5 : enemy.type === "wolf" ? 1.4 : 0.7;
+          enemy.x += Math.cos(angle) * speed;
+          enemy.y += Math.sin(angle) * speed;
+          enemy.x = Math.max(25, Math.min(875, enemy.x));
+          enemy.y = Math.max(25, Math.min(425, enemy.y));
+        }
+        
+        // Damage player on contact
+        if (dist < edata.size + 10 && frameRef.current % 45 === 0) {
+          player.hp -= edata.atk;
+          if (player.hp <= 0) {
+            player.hp = 0;
+            player.state = "death";
+          } else if (!player.state.includes("hurt")) {
+            player.state = "hurt";
+            setTimeout(() => {
+              if (player.state === "hurt") player.state = `idle_${player.dir}`;
+            }, 400);
+          }
+          spawnParticles(player.x, player.y, "#ff4444", 8, "circle");
+          spawnDamage(player.x, player.y, edata.atk);
+        }
+
+        // Draw enemy
+        const bob = Math.sin(frameRef.current * 0.04 + enemy.x) * 2;
+        ctx.fillStyle = "rgba(0,0,0,0.25)";
+        ctx.beginPath();
+        ctx.ellipse(enemy.x, enemy.y + edata.size/2, edata.size/2, 4, 0, 0, Math.PI * 2);
+        ctx.fill();
+        
+        ctx.fillStyle = edata.color;
+        ctx.shadowColor = edata.color;
+        ctx.shadowBlur = 6;
+        
+        if (enemy.type === "slime") {
+          ctx.beginPath();
+          ctx.arc(enemy.x, enemy.y + bob, edata.size/2, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.fillStyle = "rgba(255,255,255,0.3)";
+          ctx.beginPath();
+          ctx.arc(enemy.x - 4, enemy.y - 4, 5, 0, Math.PI * 2);
+          ctx.fill();
+        } else if (enemy.type === "bat") {
+          const wingFlap = Math.sin(frameRef.current * 0.1 + enemy.x) * 8;
+          ctx.beginPath();
+          ctx.ellipse(enemy.x, enemy.y + bob, edata.size/3, edata.size/2, 0, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.beginPath();
+          ctx.ellipse(enemy.x - 8, enemy.y - 4 + wingFlap, 10, 5, -0.3, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.beginPath();
+          ctx.ellipse(enemy.x + 8, enemy.y - 4 - wingFlap, 10, 5, 0.3, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.fillStyle = "#ff4444";
+          ctx.fillRect(enemy.x - 3, enemy.y - edata.size/2, 2, 3);
+          ctx.fillRect(enemy.x + 1, enemy.y - edata.size/2, 2, 3);
+        } else if (enemy.type === "wolf") {
+          ctx.fillStyle = edata.color;
+          ctx.beginPath();
+          ctx.ellipse(enemy.x, enemy.y + bob, edata.size/2, edata.size/3, 0, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.beginPath();
+          ctx.arc(enemy.x - edata.size/3, enemy.y - edata.size/4 + bob, edata.size/4, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.fillStyle = "#ff4444";
+          ctx.fillRect(enemy.x - edata.size/3 - 3, enemy.y - edata.size/3 + bob, 2, 2);
+          ctx.fillRect(enemy.x - edata.size/3 + 1, enemy.y - edata.size/3 + bob, 2, 2);
+        } else {
+          ctx.fillRect(enemy.x - edata.size/3, enemy.y - edata.size/2 + bob, edata.size*2/3, edata.size/2);
+          ctx.beginPath();
+          ctx.arc(enemy.x, enemy.y - edata.size/2 + bob, edata.size/3, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.fillStyle = "#fff";
+          ctx.fillRect(enemy.x - 5, enemy.y - edata.size/2 - 2 + bob, 3, 3);
+          ctx.fillRect(enemy.x + 2, enemy.y - edata.size/2 - 2 + bob, 3, 3);
+          ctx.fillStyle = "#222";
+          ctx.fillRect(enemy.x - 4, enemy.y - edata.size/2 - 1 + bob, 2, 2);
+          ctx.fillRect(enemy.x + 3, enemy.y - edata.size/2 - 1 + bob, 2, 2);
+        }
+        ctx.shadowBlur = 0;
+
+        // HP bar
+        const hpPct = enemy.hp / enemy.maxHp;
+        ctx.fillStyle = "rgba(0,0,0,0.6)";
+        ctx.fillRect(enemy.x - 15, enemy.y - edata.size/2 - 14, 30, 4);
+        ctx.fillStyle = hpPct > 0.5 ? "#39ff14" : hpPct > 0.25 ? "#ffaa00" : "#ff2244";
+        ctx.fillRect(enemy.x - 15, enemy.y - edata.size/2 - 14, 30 * hpPct, 4);
+        
+        ctx.fillStyle = "#fff";
+        ctx.font = "6px Orbitron";
+        ctx.textAlign = "center";
+        ctx.fillText(edata.name, enemy.x, enemy.y - edata.size/2 - 16);
+        ctx.textAlign = "start";
+      });
+
+      // Draw player
+      if (player.hp > 0 || player.state === "death") {
+        drawCharacter(ctx, player.x, player.y, 2.0, player.dir, frameRef.current * 0.3, player.state, character);
+      }
+
+      // Draw particles
       particlesRef.current = particlesRef.current.filter(p => p.life > 0);
       for (const p of particlesRef.current) {
         p.x += p.vx;
         p.y += p.vy;
-        p.vy += p.gravity;
         p.vx *= 0.98;
+        p.vy += 0.05;
         p.life -= p.decay;
         ctx.save();
         ctx.globalAlpha = Math.max(0, p.life);
@@ -563,883 +1368,300 @@ function SkillCanvas({ skill, playing }) {
         ctx.fill();
         ctx.restore();
       }
-      
-      if (tick < 100) {
-        rafRef.current = requestAnimationFrame(loop);
-      }
-    };
-    rafRef.current = requestAnimationFrame(loop);
-    return () => cancelAnimationFrame(rafRef.current);
-  }, [playing, skill, spawnParticle]);
 
-  return <canvas ref={canvasRef} width={200} height={200} style={{ width: "100%", height: "100%", pointerEvents: "none" }} />;
-}
-
-// ============================================================
-// ANIMATED PIXEL HERO (for showcase)
-// ============================================================
-function HeroCanvas({ animKey }) {
-  const canvasRef = useRef(null);
-  const frameRef = useRef(0);
-  const rafRef = useRef(null);
-  const anim = PLAYER_ANIMATIONS[animKey] || PLAYER_ANIMATIONS.idle_down;
-  const dir = animKey.includes("up") ? "up" : animKey.includes("left") ? "left" : animKey.includes("right") ? "right" : "down";
-
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext("2d");
-    const interval = 1000 / anim.fps;
-    let last = 0;
-
-    const loop = (ts) => {
-      if (ts - last >= interval) {
-        last = ts;
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        
-        // Ground shadow
-        ctx.fillStyle = "rgba(0,0,0,0.3)";
-        ctx.beginPath();
-        ctx.ellipse(64, 110, 20, 6, 0, 0, Math.PI * 2);
-        ctx.fill();
-        
-        drawPixelHero(ctx, 64, 80, 2.5, dir, frameRef.current, animKey);
-        
-        frameRef.current = anim.loop
-          ? (frameRef.current + 1) % anim.frames
-          : Math.min(frameRef.current + 1, anim.frames - 1);
-      }
-      rafRef.current = requestAnimationFrame(loop);
-    };
-    rafRef.current = requestAnimationFrame(loop);
-    return () => cancelAnimationFrame(rafRef.current);
-  }, [animKey, anim, dir]);
-
-  return <canvas ref={canvasRef} width={128} height={128} style={{ imageRendering: "pixelated", width: 128, height: 128 }} />;
-}
-
-// ============================================================
-// ENEMY CANVAS
-// ============================================================
-function EnemyCanvas({ enemy, state }) {
-  const canvasRef = useRef(null);
-  const frameRef = useRef(0);
-  const rafRef = useRef(null);
-
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext("2d");
-    let last = 0;
-    const fps = state === "chase" ? 14 : state === "attack" ? 16 : 6;
-
-    const loop = (ts) => {
-      if (ts - last >= 1000 / fps) {
-        last = ts;
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        const cx = canvas.width / 2;
-        const cy = canvas.height / 2 + 10;
-        const f = frameRef.current;
-        const bob = Math.sin(f * 0.6) * (state === "chase" ? 3 : state === "patrol" ? 2 : 1);
-        const col = state === "hurt" ? "#ff6060" : state === "stunned" ? "#ffffaa" : state === "frozen" ? "#88ccff" :
-                    state === "burned" ? "#ff6600" : state === "poisoned" ? "#80ff80" : state === "death" ? "#555" : enemy.color;
-
-        // Shadow
-        ctx.fillStyle = "rgba(0,0,0,0.25)";
-        ctx.beginPath();
-        ctx.ellipse(cx, cy + enemy.size / 2 + 5, enemy.size * 0.5, enemy.size * 0.15, 0, 0, Math.PI * 2);
-        ctx.fill();
-
+      // Damage numbers
+      damageNumbersRef.current = damageNumbersRef.current.filter(d => d.life > 0);
+      for (const d of damageNumbersRef.current) {
+        d.y -= 1.5;
+        d.life -= d.decay;
         ctx.save();
-        ctx.translate(cx, cy + bob);
-        ctx.fillStyle = col;
-        ctx.shadowColor = state === "burned" ? "#ff6600" : state === "frozen" ? "#88ccff" : state === "poisoned" ? "#39ff14" : "transparent";
-        ctx.shadowBlur = (state === "burned" || state === "frozen" || state === "poisoned") ? 15 : 0;
-
-        if (enemy.id === "slime") {
-          ctx.beginPath();
-          ctx.arc(0, 0, enemy.size / 2, 0, Math.PI * 2);
-          ctx.fill();
-          ctx.fillStyle = "rgba(255,255,255,0.3)";
-          ctx.beginPath();
-          ctx.arc(-4, -4, 5, 0, Math.PI * 2);
-          ctx.fill();
-        } else if (enemy.id === "bat") {
-          const wingFlap = Math.sin(f * 0.8) * 15;
-          ctx.beginPath();
-          ctx.arc(0, 0, enemy.size / 2 * 0.7, 0, Math.PI * 2);
-          ctx.fill();
-          ctx.beginPath();
-          ctx.ellipse(-enemy.size / 2, -5 + wingFlap * 0.3, 14, 8, -0.4, 0, Math.PI * 2);
-          ctx.fill();
-          ctx.beginPath();
-          ctx.ellipse(enemy.size / 2, -5 - wingFlap * 0.3, 14, 8, 0.4, 0, Math.PI * 2);
-          ctx.fill();
-          ctx.fillStyle = "#ff4444";
-          ctx.fillRect(-4, -enemy.size / 2 * 0.4, 3, 4);
-          ctx.fillRect(1, -enemy.size / 2 * 0.4, 3, 4);
-        } else {
-          ctx.fillRect(-enemy.size * 0.35, -enemy.size * 0.4, enemy.size * 0.7, enemy.size * 0.6);
-          ctx.fillRect(-enemy.size * 0.45, -enemy.size * 0.15, enemy.size * 0.15, enemy.size * 0.3);
-          ctx.fillRect(enemy.size * 0.3, -enemy.size * 0.15, enemy.size * 0.15, enemy.size * 0.3);
-          ctx.beginPath();
-          ctx.arc(0, -enemy.size * 0.45, enemy.size * 0.3, 0, Math.PI * 2);
-          ctx.fill();
-          ctx.fillStyle = "#222";
-          ctx.fillRect(-enemy.size * 0.12, -enemy.size * 0.52, enemy.size * 0.08, enemy.size * 0.08);
-          ctx.fillRect(enemy.size * 0.04, -enemy.size * 0.52, enemy.size * 0.08, enemy.size * 0.08);
-        }
+        ctx.globalAlpha = Math.max(0, d.life);
+        ctx.font = d.isCrit ? "bold 14px Orbitron" : "11px Orbitron";
+        ctx.fillStyle = d.isCrit ? "#ffcc00" : "#ff4444";
+        ctx.shadowColor = d.isCrit ? "#ff8800" : "#ff0000";
+        ctx.shadowBlur = 6;
+        ctx.textAlign = "center";
+        ctx.fillText(d.isCrit ? `CRIT! ${d.value}` : `-${d.value}`, d.x, d.y);
         ctx.restore();
-        frameRef.current++;
-      }
-      rafRef.current = requestAnimationFrame(loop);
-    };
-    rafRef.current = requestAnimationFrame(loop);
-    return () => cancelAnimationFrame(rafRef.current);
-  }, [enemy, state]);
-
-  return <canvas ref={canvasRef} width={100} height={100} style={{ imageRendering: "pixelated", width: 100, height: 100 }} />;
-}
-
-// ============================================================
-// WORLD EFFECTS CANVAS
-// ============================================================
-function WorldCanvas({ effect }) {
-  const canvasRef = useRef(null);
-  const rafRef = useRef(null);
-
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext("2d");
-    let t = 0;
-    const W = canvas.width, H = canvas.height;
-
-    const loop = () => {
-      ctx.clearRect(0, 0, W, H);
-      t++;
-
-      if (effect === "rain") {
-        ctx.fillStyle = "#1a2e4a";
-        ctx.fillRect(0, 0, W, H);
-        ctx.strokeStyle = "rgba(150,180,220,0.7)";
-        ctx.lineWidth = 1;
-        for (let i = 0; i < 60; i++) {
-          const x = (i * 17 + t * 3) % W;
-          const y = (i * 13 + t * 8) % H;
-          ctx.beginPath();
-          ctx.moveTo(x, y);
-          ctx.lineTo(x - 1, y + 8);
-          ctx.stroke();
-        }
-      }
-      if (effect === "snow") {
-        ctx.fillStyle = "#1a2a3a";
-        ctx.fillRect(0, 0, W, H);
-        ctx.fillStyle = "#ffffff";
-        for (let i = 0; i < 50; i++) {
-          const x = (i * 23 + Math.sin(t * 0.02 + i) * 20) % W;
-          const y = (i * 17 + t * 1.5) % H;
-          ctx.beginPath();
-          ctx.arc(x, y, 2, 0, Math.PI * 2);
-          ctx.fill();
-        }
-      }
-      if (effect === "fire") {
-        ctx.fillStyle = "#1a0000";
-        ctx.fillRect(0, 0, W, H);
-        for (let i = 0; i < 30; i++) {
-          const x = W/2 + Math.sin(t * 0.05 + i) * 40 + (Math.random() - 0.5) * 20;
-          const y = H - 30 - (i * 5 + t * 2) % 80;
-          ctx.fillStyle = `rgba(255,${100 + Math.random() * 100},0,${0.5 + Math.random() * 0.5})`;
-          ctx.beginPath();
-          ctx.arc(x, y, 3 + Math.random() * 5, 0, Math.PI * 2);
-          ctx.fill();
-        }
-      }
-      if (effect === "trees") {
-        ctx.fillStyle = "#87CEEB";
-        ctx.fillRect(0, 0, W, H);
-        ctx.fillStyle = "#1a4a1a";
-        ctx.fillRect(0, H - 20, W, 20);
-        [30, 100, 180].forEach(tx => {
-          ctx.fillStyle = "#5c3010";
-          ctx.fillRect(tx - 3, 80, 6, 30);
-          const sway = Math.sin(t * 0.03 + tx) * 3;
-          ctx.fillStyle = "#1a6a1a";
-          ctx.beginPath();
-          ctx.moveTo(tx + sway, 50);
-          ctx.lineTo(tx - 25, 90);
-          ctx.lineTo(tx + 25, 90);
-          ctx.closePath();
-          ctx.fill();
-        });
-      }
-      if (effect === "water") {
-        const grad = ctx.createLinearGradient(0, 40, 0, H);
-        grad.addColorStop(0, "#0050aa");
-        grad.addColorStop(1, "#0080ff");
-        ctx.fillStyle = grad;
-        ctx.fillRect(0, 40, W, H - 40);
-        ctx.strokeStyle = "rgba(255,255,255,0.3)";
-        ctx.lineWidth = 2;
-        for (let i = 0; i < 6; i++) {
-          ctx.beginPath();
-          for (let x = 0; x < W; x += 4) {
-            ctx.lineTo(x, 55 + i * 18 + Math.sin((x / 30) + t * 0.05 + i) * 4);
-          }
-          ctx.stroke();
-        }
       }
 
-      rafRef.current = requestAnimationFrame(loop);
-    };
-    rafRef.current = requestAnimationFrame(loop);
-    return () => cancelAnimationFrame(rafRef.current);
-  }, [effect]);
-
-  return <canvas ref={canvasRef} width={220} height={150} style={{ width: "100%", height: "100%", borderRadius: 6 }} />;
-}
-
-// ============================================================
-// FX SHOWCASE CANVAS
-// ============================================================
-function FXCanvas({ fx }) {
-  const canvasRef = useRef(null);
-  const particlesRef = useRef([]);
-  const rafRef = useRef(null);
-
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext("2d");
-    const W = canvas.width, H = canvas.height;
-    let t = 0;
-
-    const spawnParticle = (cfg) => {
-      for (let i = 0; i < (cfg.count || 10); i++) {
-        particlesRef.current.push({
-          x: cfg.cx + (Math.random() - 0.5) * (cfg.spread || 20),
-          y: cfg.cy + (Math.random() - 0.5) * (cfg.spread || 20),
-          vx: (Math.random() - 0.5) * (cfg.speed || 3),
-          vy: (Math.random() - 0.5) * (cfg.speed || 3),
-          life: 1,
-          decay: 0.02 + Math.random() * 0.03,
-          color: cfg.colors ? cfg.colors[Math.floor(Math.random() * cfg.colors.length)] : "#fff",
-          size: (cfg.minSize || 2) + Math.random() * (cfg.maxSize || 4),
-        });
+      // Update HUD periodically
+      if (frameRef.current % 10 === 0) {
+        setHud(prev => ({
+          ...prev,
+          hp: player.hp,
+          mp: player.mp,
+          state: player.state,
+        }));
       }
+
+      // Check game over
+      if (player.hp <= 0 && !gameOver) {
+        setGameOver(true);
+      }
+
+      frameRef.current++;
+      animRef.current = requestAnimationFrame(loop);
     };
 
-    const loop = () => {
-      ctx.clearRect(0, 0, W, H);
-      t++;
-
-      if (fx === "shockwave" && t % 80 === 0) {
-        spawnParticle({ cx: W/2, cy: H/2, count: 20, colors: ["#fff","#aaaaff","#8888ff"], spread: 5, speed: 3 });
-      }
-      if (fx === "explosion" && t % 90 === 0) {
-        spawnParticle({ cx: W/2, cy: H/2, count: 60, colors: ["#ff4500","#ff8c00","#ffcc00","#fff","#ff2200"], spread: 5, speed: 5, minSize: 2, maxSize: 8 });
-      }
-      if (fx === "crit" && t % 60 === 0) {
-        spawnParticle({ cx: W/2, cy: H/2, count: 25, colors: ["#ff2244","#ff8800","#ffff00","#ffffff"], spread: 15, speed: 4 });
-      }
-      if (fx === "magic_circle") {
-        ctx.strokeStyle = `hsl(${260 + Math.sin(t*0.02)*20}, 80%, 70%)`;
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.arc(W/2, H/2, 40 + Math.sin(t*0.03)*10, 0, Math.PI*2);
-        ctx.stroke();
-      }
-      if (fx === "aura") {
-        for (let i = 0; i < 3; i++) {
-          ctx.strokeStyle = `rgba(${100+i*50}, ${50+i*30}, ${200+i*20}, ${0.3 + Math.sin(t*0.05+i)*0.2})`;
-          ctx.lineWidth = 3;
-          ctx.beginPath();
-          ctx.arc(W/2, H/2, 25 + i*15 + Math.sin(t*0.04+i)*5, 0, Math.PI*2);
-          ctx.stroke();
-        }
-      }
-
-      particlesRef.current = particlesRef.current.filter(p => p.life > 0);
-      for (const p of particlesRef.current) {
-        p.x += p.vx;
-        p.y += p.vy;
-        p.life -= p.decay;
-        ctx.fillStyle = p.color;
-        ctx.globalAlpha = p.life;
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, p.size, 0, Math.PI*2);
-        ctx.fill();
-      }
-      ctx.globalAlpha = 1;
-
-      rafRef.current = requestAnimationFrame(loop);
-    };
-    rafRef.current = requestAnimationFrame(loop);
-    return () => cancelAnimationFrame(rafRef.current);
-  }, [fx]);
-
-  return <canvas ref={canvasRef} width={220} height={220} style={{ width: "100%", height: "100%", borderRadius: 8 }} />;
-}
-
-// ============================================================
-// BOSS CANVAS
-// ============================================================
-function BossCanvas({ boss, phase }) {
-  const canvasRef = useRef(null);
-  const rafRef = useRef(null);
-
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext("2d");
-    const W = canvas.width, H = canvas.height;
-    let t = 0;
-
-    const loop = () => {
-      ctx.clearRect(0, 0, W, H);
-      t++;
-      const cx = W / 2, cy = H / 2 + 10;
-      const bossColor = phase === 2 ? (boss.id === "dragon" ? "#ff0000" : boss.id === "lich" ? "#cc00ff" : "#ff8c00") : boss.color;
-
-      // Aura
-      ctx.fillStyle = bossColor;
-      ctx.globalAlpha = 0.15 + Math.sin(t * 0.05) * 0.08;
-      ctx.beginPath();
-      ctx.arc(cx, cy, boss.size * 0.7, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.globalAlpha = 1;
-
-      // Body
-      ctx.fillStyle = bossColor;
-      ctx.shadowColor = bossColor;
-      ctx.shadowBlur = phase === 2 ? 30 : 10;
-
-      if (boss.id === "dragon") {
-        const wingFlap = Math.sin(t * 0.05) * 15;
-        ctx.beginPath();
-        ctx.moveTo(cx, cy);
-        ctx.lineTo(cx - boss.size * 0.8, cy - boss.size * 0.5 + wingFlap);
-        ctx.lineTo(cx - boss.size * 0.6, cy + boss.size * 0.2);
-        ctx.closePath();
-        ctx.fill();
-        ctx.beginPath();
-        ctx.moveTo(cx, cy);
-        ctx.lineTo(cx + boss.size * 0.8, cy - boss.size * 0.5 - wingFlap);
-        ctx.lineTo(cx + boss.size * 0.6, cy + boss.size * 0.2);
-        ctx.closePath();
-        ctx.fill();
-        ctx.fillRect(cx - boss.size * 0.35, cy - boss.size * 0.35, boss.size * 0.7, boss.size * 0.55);
-        ctx.beginPath();
-        ctx.arc(cx, cy - boss.size * 0.42, boss.size * 0.3, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.fillStyle = phase === 2 ? "#ff0000" : "#ffcc00";
-        ctx.beginPath();
-        ctx.arc(cx - 8, cy - boss.size * 0.48, 5, 0, Math.PI * 2);
-        ctx.arc(cx + 8, cy - boss.size * 0.48, 5, 0, Math.PI * 2);
-        ctx.fill();
-      } else if (boss.id === "lich") {
-        ctx.beginPath();
-        ctx.moveTo(cx, cy - boss.size * 0.45);
-        ctx.lineTo(cx - boss.size * 0.4, cy + boss.size * 0.4);
-        ctx.lineTo(cx + boss.size * 0.4, cy + boss.size * 0.4);
-        ctx.closePath();
-        ctx.fill();
-        ctx.fillStyle = "#e8dcc8";
-        ctx.beginPath();
-        ctx.arc(cx, cy - boss.size * 0.5, boss.size * 0.25, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.fillStyle = phase === 2 ? "#ff0000" : "#8800ff";
-        ctx.fillRect(cx - 10, cy - boss.size * 0.56, 7, 6);
-        ctx.fillRect(cx + 3, cy - boss.size * 0.56, 7, 6);
-      } else {
-        ctx.fillRect(cx - boss.size * 0.4, cy - boss.size * 0.3, boss.size * 0.8, boss.size * 0.65);
-        ctx.beginPath();
-        ctx.arc(cx, cy - boss.size * 0.38, boss.size * 0.35, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.fillStyle = phase === 2 ? "#ff4400" : "#ddcc88";
-        ctx.fillRect(cx - 12, cy - boss.size * 0.44, 8, 6);
-        ctx.fillRect(cx + 4, cy - boss.size * 0.44, 8, 6);
-      }
-      ctx.shadowBlur = 0;
-
-      // Health bar
-      const hpPct = phase === 2 ? 0.35 : 0.72;
-      ctx.fillStyle = "rgba(0,0,0,0.6)";
-      ctx.fillRect(10, 10, W - 20, 12);
-      ctx.fillStyle = phase === 2 ? "#ff0000" : "#ff4444";
-      ctx.fillRect(10, 10, (W - 20) * hpPct, 12);
-      ctx.fillStyle = "#fff";
-      ctx.font = "8px Orbitron, monospace";
-      ctx.fillText(boss.label.toUpperCase(), 12, 20);
-
-      rafRef.current = requestAnimationFrame(loop);
-    };
-    rafRef.current = requestAnimationFrame(loop);
-    return () => cancelAnimationFrame(rafRef.current);
-  }, [boss, phase]);
-
-  return <canvas ref={canvasRef} width={220} height={200} style={{ width: "100%", height: "100%" }} />;
-}
-
-// ============================================================
-// MAIN APP
-// ============================================================
-function RPGAnimationSystem() {
-  const [tab, setTab] = useState(0);
-  const [playerAnim, setPlayerAnim] = useState("idle_down");
-  const [selectedSkill, setSelectedSkill] = useState("fireball");
-  const [skillPlaying, setSkillPlaying] = useState(false);
-  const [skillTick, setSkillTick] = useState(0);
-  const [enemyStates, setEnemyStates] = useState({});
-  const [selectedBoss, setSelectedBoss] = useState(BOSS_DATA[0]);
-  const [bossPhase, setBossPhase] = useState(1);
-  const [worldEffect, setWorldEffect] = useState("trees");
-  const [fxType, setFxType] = useState("shockwave");
-  const [gameAnimation, setGameAnimation] = useState("idle_down");
-
-  const playSkill = () => {
-    setSkillTick(t => t + 1);
-    setSkillPlaying(true);
-    setTimeout(() => setSkillPlaying(false), 2000);
-  };
-
-  const animGroups = {
-    "Idle": ["idle_down","idle_up","idle_left","idle_right"],
-    "Walk": ["walk_down","walk_up","walk_left","walk_right"],
-    "Run": ["run_down","run_up","run_left","run_right"],
-    "Combat": ["dash","attack1","attack2","attack3","skill_cast","ult_cast"],
-    "Status": ["hurt","knockback","death","revive","victory"],
-    "Activity": ["interaction","gathering","mining","fishing","crafting"],
-  };
-
-  const WORLD_EFFECTS = ["trees","water","fire","rain","snow","fog","lava","clouds"];
-  const FX_TYPES = [
-    { id: "shockwave", label: "Shockwave" },
-    { id: "aura", label: "Aura" },
-    { id: "trail", label: "Weapon Trail" },
-    { id: "motionblur", label: "Motion Blur" },
-    { id: "crit", label: "Critical Hit" },
-    { id: "magic_circle", label: "Magic Circle" },
-    { id: "explosion", label: "Explosion" },
-  ];
-
-  const NPC_ANIMS = ["Idle", "Walking", "Talking", "Waving", "Sitting", "Working", "Trading"];
-  const PET_ANIMS = ["Follow", "Idle", "Attack", "Skill", "Happy", "Level Up"];
+    animRef.current = requestAnimationFrame(loop);
+    return () => cancelAnimationFrame(animRef.current);
+  }, [character, spawnParticles, spawnDamage, gameOver]);
 
   return (
-    <div style={{
-      width: "100%",
-      background: "linear-gradient(160deg, #0a0a12 0%, #0d0820 50%, #080810 100%)",
-      color: "#e0d0ff",
-      fontFamily: "Inter, sans-serif",
-    }}>
-      {/* Header */}
-      <div style={{
-        background: "linear-gradient(90deg, rgba(108,63,197,0.15) 0%, rgba(180,80,255,0.08) 100%)",
-        borderBottom: "1px solid rgba(108,63,197,0.4)",
-        padding: "12px 20px",
-        display: "flex", alignItems: "center", gap: 12,
-        backdropFilter: "blur(20px)",
-      }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <div style={{
-            width: 36, height: 36, borderRadius: 8,
-            background: "linear-gradient(135deg, #6c3fc5, #b040ff)",
-            display: "flex", alignItems: "center", justifyContent: "center",
-            fontSize: 18, boxShadow: "0 0 15px rgba(108,63,197,0.6)",
-          }}>⚔</div>
-          <div>
-            <h1 style={{ fontFamily: "Orbitron, monospace", fontSize: 14, fontWeight: 700, color: "#fff", margin: 0, letterSpacing: 1 }}>
-              RPG ANIMATION SYSTEM
-            </h1>
-            <div style={{ fontSize: 8, color: "#8060aa", letterSpacing: 1 }}>GAME + SHOWCASE</div>
+    <div className="game-world">
+      <canvas ref={canvasRef} width={900} height={450} />
+      
+      {/* HUD */}
+      <div className="game-hud-top">
+        <div className="hud-panel" style={{ minWidth: 160 }}>
+          <div style={{ display: "flex", justifyContent: "space-between" }}>
+            <span>{character.name}</span>
+            <span>{t.level}{hud.level}</span>
           </div>
+          <div style={{ fontSize: 8, color: "#aaa" }}>❤️ HP</div>
+          <div className="hp-bar-bg">
+            <div className="hp-bar-fill" style={{ width: `${(hud.hp / hud.maxHp) * 100}%` }} />
+          </div>
+          <div style={{ fontSize: 8, color: "#aaa", marginTop: 3 }}>💎 MP</div>
+          <div className="hp-bar-bg">
+            <div className="mp-bar-fill" style={{ width: `${(hud.mp / hud.maxMp) * 100}%` }} />
+          </div>
+          <div style={{ fontSize: 7, color: "#5a3a8a", marginTop: 3 }}>
+            XP: {hud.xp}/{hud.nextXp} | ⭐ {hud.score}
+          </div>
+        </div>
+        <div className="hud-panel" style={{ fontSize: 8 }}>
+          {ANIM_STATES[hud.state] ? hud.state.replace(/_/g, " ") : hud.state}
         </div>
       </div>
 
-      {/* Tabs */}
-      <div style={{
-        display: "flex", gap: 2, padding: "10px 20px 0",
-        borderBottom: "1px solid rgba(108,63,197,0.2)",
-        overflowX: "auto",
-      }}>
-        {TABS.map((t, i) => (
-          <button key={t} onClick={() => setTab(i)}
-            style={{
-              background: tab === i ? "linear-gradient(180deg, rgba(108,63,197,0.5) 0%, rgba(108,63,197,0.2) 100%)" : "transparent",
-              border: "1px solid",
-              borderColor: tab === i ? "rgba(108,63,197,0.8)" : "transparent",
-              borderBottom: tab === i ? "1px solid rgba(30,0,60,1)" : "1px solid transparent",
-              color: tab === i ? "#e0d0ff" : "#6040a0",
-              padding: "8px 14px", cursor: "pointer",
-              fontFamily: "Orbitron, monospace", fontSize: 9,
-              letterSpacing: 1, borderRadius: "6px 6px 0 0",
-              transition: "all 0.2s", whiteSpace: "nowrap",
-            }}
-          >{t}</button>
+      {/* Joystick */}
+      <Joystick onMove={handleJoystickMove} />
+
+      {/* Skill Buttons */}
+      <div className="skill-buttons">
+        <div className="skill-row">
+          {SKILLS.map(skill => {
+            const cdRemaining = cooldowns[skill.id] || 0;
+            const canUse = hud.mp >= skill.mp && cdRemaining === 0;
+            return (
+              <button
+                key={skill.id}
+                className="skill-btn"
+                style={{
+                  borderColor: canUse ? skill.color : "#444",
+                  opacity: canUse ? 1 : 0.5,
+                  color: skill.color,
+                }}
+                onClick={() => useSkill(skill.id)}
+                disabled={!canUse}
+              >
+                {skill.icon}
+                {cdRemaining > 0 && (
+                  <div className="cooldown">
+                    {Math.ceil(cdRemaining / 1000)}s
+                  </div>
+                )}
+                <span className="skill-label">{skill.mp}MP</span>
+              </button>
+            );
+          })}
+        </div>
+        <button
+          className="skill-btn attack-btn"
+          onClick={attack}
+          style={{ alignSelf: "center" }}
+        >
+          ⚔️
+          <span className="skill-label" style={{ bottom: -16 }}>ATK</span>
+        </button>
+      </div>
+
+      {/* Back button */}
+      <button className="back-btn" onClick={onBack}>{t.back}</button>
+
+      {/* Game Over */}
+      {gameOver && (
+        <div style={{
+          position: "absolute", inset: 0, background: "rgba(0,0,0,0.8)",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          zIndex: 50, flexDirection: "column",
+        }}>
+          <div style={{ fontSize: 36, color: "#ff2244", fontFamily: "Orbitron", fontWeight: 900, marginBottom: 8 }}>
+            {t.gameOver}
+          </div>
+          <div style={{ color: "#fff", fontFamily: "Orbitron", fontSize: 16, marginBottom: 6 }}>
+            {t.level}{hud.level} · {t.score}: {hud.score}
+          </div>
+          <button onClick={onBack} style={{
+            background: "linear-gradient(135deg, #6c3fc5, #b040ff)",
+            border: "none", color: "#fff", padding: "12px 28px", borderRadius: 10,
+            fontFamily: "Orbitron", fontSize: 12, cursor: "pointer", marginTop: 10,
+          }}>{t.retry}</button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ============================================================
+// OTHER PAGES
+// ============================================================
+function HomePage({ onPlay, t }) {
+  const [selected, setSelected] = useState(null);
+  return (
+    <div className="home-page">
+      <h2 style={{ fontFamily: "Orbitron", color: "#c090ff", fontSize: 16, marginBottom: 4 }}>{t.select}</h2>
+      <p style={{ color: "#5a3a8a", fontSize: 9, marginBottom: 16 }}>{t.choose}</p>
+      <div className="character-select">
+        {CHARACTERS.map(c => (
+          <div key={c.id} className={`char-card ${selected?.id === c.id ? "selected" : ""}`}
+            onClick={() => setSelected(c)}>
+            <div className="char-avatar" style={{ background: `${c.color}22`, border: `2px solid ${c.color}` }}>
+              {c.icon}
+            </div>
+            <div className="char-name">{c.name}</div>
+            <div style={{ color: c.color, fontSize: 9, fontFamily: "Orbitron" }}>{c.className}</div>
+            <div style={{ fontSize: 8, color: "#5a3a8a", marginTop: 4 }}>
+              ❤️{c.stats.hp} ⚔️{c.stats.atk} 🛡️{c.stats.def} ⚡{c.stats.spd}
+            </div>
+          </div>
         ))}
       </div>
-
-      {/* Content */}
-      <div style={{ padding: 16 }}>
-
-        {/* ===== TAB 0: WORLD ===== */}
-        {tab === 0 && (
-          <div>
-            <div className="canvas-world-wrapper" style={{ height: 400, borderRadius: 10, overflow: "hidden", border: "1px solid rgba(108,63,197,0.3)" }}>
-              <WorldGameplay onAnimationChange={setGameAnimation} />
-              <div className="hud">
-                ❤️ 100 | ⚔️ ATK 25 | 🛡️ DEF 10 | 🏃 {gameAnimation.replace(/_/g, " ").toUpperCase()}
-              </div>
-              <div className="controls-hint">WASD/Arrows = Move | SPACE = Attack | R = Run Toggle</div>
-            </div>
-            <div style={{ marginTop: 10, display: "flex", gap: 8, flexWrap: "wrap" }}>
-              {ENEMY_DATA.map(e => (
-                <span key={e.id} style={{
-                  background: `${e.color}33`, border: `1px solid ${e.color}66`,
-                  color: e.color, padding: "4px 10px", borderRadius: 12,
-                  fontSize: 10, fontFamily: "Orbitron, monospace",
-                }}>{e.label}</span>
-              ))}
-              <span style={{ color: "#5a3a8a", fontSize: 9, marginLeft: "auto" }}>
-                Current: {PLAYER_ANIMATIONS[gameAnimation]?.label || "Idle Down"}
-              </span>
-            </div>
-          </div>
-        )}
-
-        {/* ===== TAB 1: PLAYER ===== */}
-        {tab === 1 && (
-          <div style={{ display: "grid", gridTemplateColumns: "260px 1fr", gap: 20 }}>
-            <div>
-              <div style={{
-                background: "linear-gradient(180deg, rgba(20,10,40,0.8) 0%, rgba(10,5,20,0.9) 100%)",
-                border: "1px solid rgba(108,63,197,0.4)", borderRadius: 12, padding: 16,
-                textAlign: "center",
-              }}>
-                <div style={{ fontSize: 9, fontFamily: "Orbitron, monospace", color: "#8060aa", letterSpacing: 2, marginBottom: 10 }}>LIVE PREVIEW</div>
-                <div style={{
-                  background: "radial-gradient(circle at 50% 60%, rgba(108,63,197,0.15) 0%, transparent 70%)",
-                  borderRadius: 10, padding: 16, display: "inline-block",
-                  border: "1px solid rgba(108,63,197,0.2)",
-                }}>
-                  <HeroCanvas animKey={playerAnim} />
-                </div>
-                <div style={{
-                  fontFamily: "Orbitron, monospace", fontSize: 11, color: "#c090ff",
-                  marginTop: 10, textTransform: "uppercase",
-                }}>{PLAYER_ANIMATIONS[playerAnim]?.label}</div>
-                <div style={{ fontSize: 8, color: "#5a3a8a", marginTop: 4 }}>
-                  {PLAYER_ANIMATIONS[playerAnim]?.frames}f · {PLAYER_ANIMATIONS[playerAnim]?.fps}fps · {PLAYER_ANIMATIONS[playerAnim]?.loop ? "LOOP" : "ONE-SHOT"}
-                </div>
-              </div>
-            </div>
-            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-              {Object.entries(animGroups).map(([group, anims]) => (
-                <div key={group} style={{ background: "rgba(10,5,20,0.7)", borderRadius: 8, padding: 12, border: "1px solid rgba(108,63,197,0.15)" }}>
-                  <div style={{ fontSize: 9, fontFamily: "Orbitron, monospace", color: "#5a3a8a", letterSpacing: 1, marginBottom: 8 }}>
-                    ◈ {group.toUpperCase()}
-                  </div>
-                  <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
-                    {anims.map(key => (
-                      <button key={key} onClick={() => setPlayerAnim(key)}
-                        style={{
-                          background: playerAnim === key ? "linear-gradient(135deg, #6c3fc5, #4a2090)" : "rgba(108,63,197,0.1)",
-                          border: `1px solid ${playerAnim === key ? "#9060ff" : "rgba(108,63,197,0.3)"}`,
-                          color: playerAnim === key ? "#fff" : "#8060a0",
-                          padding: "4px 8px", borderRadius: 4, cursor: "pointer",
-                          fontFamily: "Orbitron, monospace", fontSize: 8,
-                          transition: "all 0.15s",
-                        }}
-                      >{PLAYER_ANIMATIONS[key]?.label}</button>
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* ===== TAB 2: SKILLS ===== */}
-        {tab === 2 && (
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
-            {Object.entries(SKILL_DATA).map(([id, sk]) => {
-              const isSelected = selectedSkill === id;
-              return (
-                <div key={id} onClick={() => setSelectedSkill(id)}
-                  style={{
-                    background: isSelected ? "rgba(10,5,20,0.9)" : "rgba(10,5,20,0.6)",
-                    border: `1px solid ${isSelected ? sk.color + "88" : "rgba(108,63,197,0.2)"}`,
-                    borderRadius: 10, padding: 14, cursor: "pointer",
-                    transition: "all 0.2s",
-                    boxShadow: isSelected ? `0 0 15px ${sk.color}33` : "none",
-                  }}>
-                  <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
-                    <div style={{ position: "relative", width: 100, height: 100, flexShrink: 0 }}>
-                      <div style={{ width: "100%", height: "100%", background: "rgba(0,0,0,0.5)", borderRadius: 8, border: `1px solid ${sk.color}44` }}>
-                        <SkillCanvas skill={id} playing={isSelected && skillPlaying} key={`${id}-${skillTick}`} />
-                      </div>
-                      <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 30, pointerEvents: "none" }}>
-                        {sk.icon}
-                      </div>
-                    </div>
-                    <div style={{ flex: 1 }}>
-                      <div style={{ fontFamily: "Orbitron, monospace", color: sk.color, fontSize: 11, fontWeight: 700 }}>
-                        {sk.label}
-                      </div>
-                      <div style={{ fontSize: 9, color: "#6040a0", marginTop: 4 }}>{sk.desc}</div>
-                      {isSelected && (
-                        <button onClick={(e) => { e.stopPropagation(); playSkill(); }}
-                          style={{
-                            marginTop: 8, background: `linear-gradient(135deg, ${sk.color}, ${sk.glow})`,
-                            border: "none", color: "#000", padding: "5px 12px",
-                            borderRadius: 4, cursor: "pointer", fontFamily: "Orbitron, monospace",
-                            fontSize: 8, fontWeight: 700,
-                          }}>▶ CAST</button>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
-
-        {/* ===== TAB 3: ENEMIES ===== */}
-        {tab === 3 && (
-          <div>
-            <div style={{ fontSize: 9, fontFamily: "Orbitron, monospace", color: "#5a3a8a", letterSpacing: 1, marginBottom: 12 }}>◈ SELECT STATE TO PREVIEW</div>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: 12 }}>
-              {ENEMY_DATA.map(enemy => {
-                const st = enemyStates[enemy.id] || "idle";
-                const STATES = ["spawn","idle","patrol","walk","chase","attack","hurt","stunned","frozen","burned","death"];
-                return (
-                  <div key={enemy.id} style={{
-                    background: "rgba(10,5,20,0.8)", border: "1px solid rgba(108,63,197,0.2)",
-                    borderRadius: 10, padding: 12,
-                  }}>
-                    <div style={{ textAlign: "center" }}>
-                      <EnemyCanvas enemy={enemy} state={st} />
-                    </div>
-                    <div style={{ fontFamily: "Orbitron, monospace", color: "#c090ff", fontSize: 10, textAlign: "center", margin: "6px 0" }}>
-                      {enemy.label}
-                    </div>
-                    <div style={{ display: "flex", flexWrap: "wrap", gap: 3 }}>
-                      {STATES.map(s => (
-                        <button key={s} onClick={() => setEnemyStates(prev => ({ ...prev, [enemy.id]: s }))}
-                          style={{
-                            background: st === s ? `${enemy.color}44` : "rgba(108,63,197,0.1)",
-                            border: `1px solid ${st === s ? enemy.color : "rgba(108,63,197,0.2)"}`,
-                            color: st === s ? "#fff" : "#6040a0",
-                            padding: "2px 5px", borderRadius: 3, cursor: "pointer",
-                            fontFamily: "Orbitron, monospace", fontSize: 7,
-                          }}>{s}</button>
-                      ))}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
-
-        {/* ===== TAB 4: BOSSES ===== */}
-        {tab === 4 && (
-          <div>
-            <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
-              {BOSS_DATA.map(b => (
-                <button key={b.id} onClick={() => setSelectedBoss(b)}
-                  style={{
-                    background: selectedBoss.id === b.id ? `linear-gradient(135deg, ${b.color}66, ${b.color}33)` : "rgba(10,5,20,0.7)",
-                    border: `1px solid ${selectedBoss.id === b.id ? b.color : "rgba(108,63,197,0.3)"}`,
-                    color: selectedBoss.id === b.id ? "#fff" : "#8060a0",
-                    padding: "6px 14px", borderRadius: 6, cursor: "pointer",
-                    fontFamily: "Orbitron, monospace", fontSize: 9,
-                  }}>{b.label}</button>
-              ))}
-            </div>
-            <div style={{ display: "grid", gridTemplateColumns: "240px 1fr", gap: 20 }}>
-              <div style={{
-                background: "rgba(10,5,20,0.9)", border: `1px solid ${selectedBoss.color}44`,
-                borderRadius: 10, overflow: "hidden",
-              }}>
-                <BossCanvas boss={selectedBoss} phase={bossPhase} />
-              </div>
-              <div>
-                <div style={{ background: "rgba(10,5,20,0.8)", borderRadius: 8, padding: 14, border: "1px solid rgba(108,63,197,0.2)" }}>
-                  <div style={{ fontFamily: "Orbitron, monospace", fontSize: 12, color: selectedBoss.color, fontWeight: 700 }}>
-                    {selectedBoss.label.toUpperCase()}
-                  </div>
-                  <div style={{ marginTop: 10 }}>
-                    <div style={{ fontSize: 8, color: "#5a3a8a", fontFamily: "Orbitron, monospace", letterSpacing: 1, marginBottom: 6 }}>PHASE</div>
-                    <div style={{ display: "flex", gap: 6 }}>
-                      {[1, 2].map(p => (
-                        <button key={p} onClick={() => setBossPhase(p)}
-                          style={{
-                            background: bossPhase === p ? "linear-gradient(135deg, #6c3fc5, #4a2090)" : "rgba(108,63,197,0.1)",
-                            border: `1px solid ${bossPhase === p ? "#9060ff" : "rgba(108,63,197,0.3)"}`,
-                            color: bossPhase === p ? "#fff" : "#6040a0",
-                            padding: "5px 16px", borderRadius: 4, cursor: "pointer",
-                            fontFamily: "Orbitron, monospace", fontSize: 9,
-                          }}>Phase {p}{p === 2 ? " 🔥" : ""}</button>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* ===== TAB 5: NPCs & Pets ===== */}
-        {tab === 5 && (
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
-            <div style={{ background: "rgba(10,5,20,0.8)", borderRadius: 10, padding: 16, border: "1px solid rgba(108,63,197,0.2)" }}>
-              <div style={{ fontFamily: "Orbitron, monospace", color: "#c090ff", fontSize: 11, letterSpacing: 1, marginBottom: 12 }}>◈ NPC ANIMATIONS</div>
-              {NPC_ANIMS.map(anim => (
-                <div key={anim} style={{
-                  display: "flex", alignItems: "center", gap: 10,
-                  padding: "8px 0", borderBottom: "1px solid rgba(108,63,197,0.1)",
-                }}>
-                  <div style={{
-                    width: 28, height: 28, borderRadius: 4,
-                    background: "linear-gradient(135deg, #3060a0, #204080)",
-                    display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14,
-                  }}>
-                    {anim === "Idle" ? "🧍" : anim === "Walking" ? "🚶" : anim === "Talking" ? "💬" : anim === "Waving" ? "👋" : anim === "Sitting" ? "🪑" : anim === "Working" ? "⚒️" : "🤝"}
-                  </div>
-                  <div>
-                    <div style={{ color: "#c090ff", fontSize: 11, fontFamily: "Orbitron, monospace" }}>{anim}</div>
-                    <div style={{ fontSize: 8, color: "#5a3a8a" }}>Smooth looping</div>
-                  </div>
-                </div>
-              ))}
-            </div>
-            <div style={{ background: "rgba(10,5,20,0.8)", borderRadius: 10, padding: 16, border: "1px solid rgba(108,63,197,0.2)" }}>
-              <div style={{ fontFamily: "Orbitron, monospace", color: "#c090ff", fontSize: 11, letterSpacing: 1, marginBottom: 12 }}>◈ PET ANIMATIONS</div>
-              {PET_ANIMS.map(anim => (
-                <div key={anim} style={{
-                  display: "flex", alignItems: "center", gap: 10,
-                  padding: "8px 0", borderBottom: "1px solid rgba(108,63,197,0.1)",
-                }}>
-                  <div style={{
-                    width: 28, height: 28, borderRadius: 4,
-                    background: "linear-gradient(135deg, #206040, #104020)",
-                    display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14,
-                  }}>
-                    {anim === "Follow" ? "🐾" : anim === "Idle" ? "🐱" : anim === "Attack" ? "⚔️" : anim === "Skill" ? "✨" : anim === "Happy" ? "💖" : "⬆️"}
-                  </div>
-                  <div>
-                    <div style={{ color: "#c090ff", fontSize: 11, fontFamily: "Orbitron, monospace" }}>{anim}</div>
-                    <div style={{ fontSize: 8, color: "#5a3a8a" }}>{anim === "Level Up" ? "One-shot" : "Looping"}</div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* ===== TAB 6: WORLD & UI ===== */}
-        {tab === 6 && (
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
-            <div>
-              <div style={{ fontFamily: "Orbitron, monospace", color: "#c090ff", fontSize: 11, letterSpacing: 1, marginBottom: 10 }}>◈ WORLD EFFECTS</div>
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginBottom: 10 }}>
-                {WORLD_EFFECTS.map(e => (
-                  <button key={e} onClick={() => setWorldEffect(e)}
-                    style={{
-                      background: worldEffect === e ? "linear-gradient(135deg, #6c3fc5, #4a2090)" : "rgba(108,63,197,0.1)",
-                      border: `1px solid ${worldEffect === e ? "#9060ff" : "rgba(108,63,197,0.3)"}`,
-                      color: worldEffect === e ? "#fff" : "#6040a0",
-                      padding: "4px 10px", borderRadius: 4, cursor: "pointer",
-                      fontFamily: "Orbitron, monospace", fontSize: 8,
-                      textTransform: "capitalize",
-                    }}>{e}</button>
-                ))}
-              </div>
-              <div style={{ height: 150, background: "rgba(0,0,0,0.5)", borderRadius: 8, overflow: "hidden", border: "1px solid rgba(108,63,197,0.2)" }}>
-                <WorldCanvas effect={worldEffect} />
-              </div>
-            </div>
-            <div>
-              <div style={{ fontFamily: "Orbitron, monospace", color: "#c090ff", fontSize: 11, letterSpacing: 1, marginBottom: 10 }}>◈ UI ANIMATIONS</div>
-              <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                {["Quest","Damage","Level Up","Achievement"].map(b => (
-                  <button key={b} style={{
-                    background: "linear-gradient(135deg, #6c3fc5 0%, #4a2090 100%)",
-                    color: "#fff", border: "1px solid #9060ff",
-                    padding: "6px 12px", borderRadius: 4, cursor: "pointer",
-                    fontFamily: "Orbitron, monospace", fontSize: 9,
-                  }}>{b}</button>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* ===== TAB 7: FX SHOWCASE ===== */}
-        {tab === 7 && (
-          <div>
-            <div style={{ fontFamily: "Orbitron, monospace", color: "#c090ff", fontSize: 11, letterSpacing: 1, marginBottom: 12 }}>◈ VISUAL EFFECTS</div>
-            <div style={{ display: "flex", gap: 4, flexWrap: "wrap", marginBottom: 16 }}>
-              {FX_TYPES.map(fx => (
-                <button key={fx.id} onClick={() => setFxType(fx.id)}
-                  style={{
-                    background: fxType === fx.id ? "linear-gradient(135deg, #6c3fc5, #4a2090)" : "rgba(108,63,197,0.1)",
-                    border: `1px solid ${fxType === fx.id ? "#9060ff" : "rgba(108,63,197,0.3)"}`,
-                    color: fxType === fx.id ? "#fff" : "#6040a0",
-                    padding: "5px 12px", borderRadius: 4, cursor: "pointer",
-                    fontFamily: "Orbitron, monospace", fontSize: 8,
-                  }}>{fx.label}</button>
-              ))}
-            </div>
-            <div style={{ display: "grid", gridTemplateColumns: "240px 1fr", gap: 20 }}>
-              <div style={{
-                height: 240, background: "rgba(0,0,0,0.7)", borderRadius: 10, overflow: "hidden",
-                border: "1px solid rgba(108,63,197,0.3)",
-              }}>
-                <FXCanvas fx={fxType} key={fxType} />
-              </div>
-              <div style={{ background: "rgba(10,5,20,0.8)", borderRadius: 10, padding: 16, border: "1px solid rgba(108,63,197,0.2)" }}>
-                <div style={{ fontFamily: "Orbitron, monospace", color: "#c090ff", fontSize: 12, marginBottom: 12 }}>
-                  {FX_TYPES.find(f => f.id === fxType)?.label}
-                </div>
-                {["GPU Canvas 2D","Particle System","Glow Effects","Animation Loop"].map(f => (
-                  <div key={f} style={{ display: "flex", alignItems: "center", gap: 6, padding: "4px 0" }}>
-                    <div style={{ width: 4, height: 4, borderRadius: "50%", background: "#9060ff" }} />
-                    <span style={{ fontSize: 10, color: "#8060a0" }}>{f}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* Footer */}
-      <div style={{
-        borderTop: "1px solid rgba(108,63,197,0.2)",
-        padding: "10px 20px",
-        display: "flex", justifyContent: "space-between", alignItems: "center",
-        background: "rgba(0,0,0,0.3)",
-      }}>
-        <span style={{ fontSize: 8, color: "#3a2060", fontFamily: "Orbitron, monospace", letterSpacing: 1 }}>
-          {Object.keys(PLAYER_ANIMATIONS).length} STATES · {Object.keys(SKILL_DATA).length} SKILLS · {ENEMY_DATA.length} ENEMIES · {BOSS_DATA.length} BOSSES
-        </span>
-        <div style={{ display: "flex", gap: 4 }}>
-          {["#6c3fc5","#f5a623","#00d4ff","#39ff14","#ff2244"].map(c => (
-            <div key={c} style={{ width: 6, height: 6, borderRadius: "50%", background: c, boxShadow: `0 0 4px ${c}` }} />
-          ))}
+      {selected && (
+        <div style={{ background: "rgba(20,10,40,0.8)", border: `1px solid ${selected.color}44`, borderRadius: 10, padding: 12, maxWidth: 450, margin: "0 auto 16px" }}>
+          <p style={{ color: "#8060aa", fontSize: 9 }}>{selected.desc}</p>
         </div>
+      )}
+      <button className="play-btn" disabled={!selected} onClick={() => selected && onPlay(selected)}>
+        {t.play}
+      </button>
+    </div>
+  );
+}
+
+function ItemsPage({ t }) {
+  return (
+    <div className="items-page">
+      <h2 style={{ fontFamily: "Orbitron", color: "#c090ff", fontSize: 14, marginBottom: 12 }}>{t.inv}</h2>
+      <div className="items-grid">
+        {ITEMS.map(item => (
+          <div key={item.id} className="item-slot">
+            <div className="item-icon">{item.icon}</div>
+            <div style={{ fontFamily: "Orbitron", fontSize: 8, color: item.color }}>{item.name}</div>
+            <div style={{ fontSize: 7, color: "#5a3a8a" }}>{item.desc}</div>
+            <span style={{ fontSize: 6, color: item.color, textTransform: "uppercase", letterSpacing: 1 }}>
+              {item.rarity}
+            </span>
+          </div>
+        ))}
       </div>
     </div>
   );
 }
 
-// Render app
-ReactDOM.render(<RPGAnimationSystem />, document.getElementById("root"));
+function InfoPage({ t }) {
+  return (
+    <div className="info-page">
+      <h2 style={{ fontFamily: "Orbitron", color: "#c090ff", fontSize: 14, marginBottom: 10 }}>{t.animInfo}</h2>
+      <p style={{ fontSize: 9, color: "#8060aa", marginBottom: 12 }}>{t.animDesc}</p>
+      <div className="info-section">
+        <h3>{t.states} ({Object.keys(ANIM_STATES).length})</h3>
+        <ul style={{ listStyle: "none", padding: 0 }}>
+          {Object.entries(ANIM_STATES).map(([k, v]) => (
+            <li key={k}>{k.replace(/_/g, " ")} · {v.frames}f · {v.fps}fps · {v.loop ? "LOOP" : "ONCE"}</li>
+          ))}
+        </ul>
+      </div>
+      <div className="info-section">
+        <h3>{t.skills} ({SKILLS.length})</h3>
+        <ul style={{ listStyle: "none", padding: 0 }}>
+          {SKILLS.map(s => (
+            <li key={s.id}>{s.icon} {s.name} · {s.desc} · CD: {s.cooldown/1000}s · MP: {s.mp}</li>
+          ))}
+        </ul>
+      </div>
+      <div className="info-section">
+        <h3>{t.enemies} ({ENEMIES.length})</h3>
+        <ul style={{ listStyle: "none", padding: 0 }}>
+          {ENEMIES.map(e => (
+            <li key={e.id}>{e.name} · HP:{e.hp} · ATK:{e.atk}</li>
+          ))}
+        </ul>
+      </div>
+    </div>
+  );
+}
+
+function LanguagePage({ lang, setLang }) {
+  return (
+    <div className="language-page">
+      <h2 style={{ fontFamily: "Orbitron", color: "#c090ff", fontSize: 16 }}>🌐 Language</h2>
+      <div style={{ marginTop: 16 }}>
+        {Object.entries(LANGUAGES).map(([code, l]) => (
+          <button key={code} className={`lang-btn ${lang === code ? "active" : ""}`}
+            onClick={() => setLang(code)}>
+            {l.flag} {l.name}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function AboutPage({ t }) {
+  return (
+    <div className="about-page">
+      <div style={{ fontSize: 50, marginBottom: 8 }}>⚔️</div>
+      <h2 style={{ fontFamily: "Orbitron", color: "#fff", fontSize: 18 }}>{t.aboutTitle}</h2>
+      <p style={{ color: "#5a3a8a", fontSize: 9, marginBottom: 16 }}>{t.version}</p>
+      <div style={{ background: "rgba(20,10,40,0.6)", border: "1px solid rgba(108,63,197,0.3)", borderRadius: 10, padding: 16, maxWidth: 450, margin: "0 auto", textAlign: "left" }}>
+        <p style={{ fontSize: 9, color: "#8060aa", marginBottom: 6 }}>{t.engine}</p>
+        <p style={{ fontSize: 8, color: "#5a3a8a" }}>🎨 Enhanced Pixel Art Characters</p>
+        <p style={{ fontSize: 8, color: "#5a3a8a" }}>🎮 Virtual Joystick + Skill Buttons</p>
+        <p style={{ fontSize: 8, color: "#5a3a8a" }}>✨ Particle FX System</p>
+        <p style={{ fontSize: 8, color: "#5a3a8a" }}>🌍 Open World with Enemy AI</p>
+      </div>
+    </div>
+  );
+}
+
+// ============================================================
+// MAIN APP
+// ============================================================
+function App() {
+  const [page, setPage] = useState("home");
+  const [lang, setLang] = useState("en");
+  const [character, setCharacter] = useState(null);
+  const t = T[lang] || T.en;
+
+  return (
+    <div className="game-container">
+      <div className="header">
+        <div className="logo">⚔️ RPG ADVENTURE</div>
+        <nav className="nav-menu">
+          {["home", "items", "info", "language", "about"].map(p => (
+            <button key={p} className={`nav-btn ${page === p ? "active" : ""}`}
+              onClick={() => setPage(p)}>
+              {t[p]}
+            </button>
+          ))}
+        </nav>
+      </div>
+      <div className="content-area">
+        {page === "home" && !character && <HomePage onPlay={(c) => { setCharacter(c); setPage("game"); }} t={t} />}
+        {page === "game" && character && <GameWorld character={character} onBack={() => { setCharacter(null); setPage("home"); }} t={t} />}
+        {page === "items" && <ItemsPage t={t} />}
+        {page === "info" && <InfoPage t={t} />}
+        {page === "language" && <LanguagePage lang={lang} setLang={setLang} />}
+        {page === "about" && <AboutPage t={t} />}
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.render(<App />, document.getElementById("root"));
 </script>
 </body>
 </html>
