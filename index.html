@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>ARCADE COMBAT · 3 HEROES (FIXED)</title>
+  <title>ARCADE COMBAT MOBILE · 3 HEROES</title>
   <style>
     * {
       margin: 0; padding: 0; box-sizing: border-box;
@@ -51,38 +51,32 @@
 
     // ==================== FIGHTER DATA ====================
     const FIGHTERS = [
-      { id:0, name:'FLAME KNIGHT', style:'Fire Sword', color:'#e74c3c', secColor:'#ff6b35', hp:105, atk:13, def:7, spd:6,
+      { id:0, name:'FLAME KNIGHT', color:'#e74c3c', secColor:'#ff6b35', hp:105, atk:13, def:7,
         moves: {
-          lp:{dmg:5, range:55, speed:10, kb:2, type:'punch', height:'mid'},
-          hp:{dmg:9, range:65, speed:16, kb:5, type:'punch', height:'high'},
-          lk:{dmg:6, range:60, speed:12, kb:3, type:'kick', height:'low'},
-          hk:{dmg:11, range:70, speed:18, kb:7, type:'kick', height:'mid'},
-          projectile:{dmg:8, cost:20, name:'FIREBALL', effect:'fire', height:'mid'},
-          antiAir:{dmg:10, cost:25, name:'RISING SLASH', effect:'stun', height:'high'},
-          mobility:{dmg:6, cost:15, name:'BLAZE DASH', height:'mid'},
-          ultimate:{dmg:42, cost:90, name:'INFERNO BLADE', effect:'fire', height:'mid'}
+          lp:{dmg:5, range:60, speed:10, kb:2, height:'mid'},
+          hp:{dmg:9, range:70, speed:16, kb:5, height:'high'},
+          lk:{dmg:6, range:65, speed:12, kb:3, height:'low'},
+          hk:{dmg:11, range:75, speed:18, kb:7, height:'mid'},
+          sp:{dmg:8, cost:20, effect:'fire', height:'mid'},
+          ult:{dmg:42, cost:90, effect:'fire', height:'mid'}
         }},
-      { id:1, name:'THUNDER MONK', style:'Lightning Fist', color:'#f39c12', secColor:'#3498db', hp:90, atk:12, def:8, spd:8,
+      { id:1, name:'THUNDER MONK', color:'#f39c12', secColor:'#3498db', hp:90, atk:12, def:8,
         moves: {
-          lp:{dmg:4, range:50, speed:8, kb:2, type:'punch', height:'mid'},
-          hp:{dmg:8, range:60, speed:14, kb:4, type:'punch', height:'high'},
-          lk:{dmg:5, range:55, speed:10, kb:3, type:'kick', height:'low'},
-          hk:{dmg:10, range:65, speed:16, kb:6, type:'kick', height:'mid'},
-          projectile:{dmg:7, cost:20, name:'LIGHTNING BOLT', effect:'stun', height:'mid'},
-          antiAir:{dmg:9, cost:25, name:'THUNDER UPPER', effect:'stun', height:'high'},
-          mobility:{dmg:5, cost:15, name:'ZIP STEP', height:'mid'},
-          ultimate:{dmg:38, cost:90, name:'THUNDER GOD FIST', effect:'stun', height:'mid'}
+          lp:{dmg:4, range:55, speed:8, kb:2, height:'mid'},
+          hp:{dmg:8, range:65, speed:14, kb:4, height:'high'},
+          lk:{dmg:5, range:60, speed:10, kb:3, height:'low'},
+          hk:{dmg:10, range:70, speed:16, kb:6, height:'mid'},
+          sp:{dmg:7, cost:20, effect:'stun', height:'mid'},
+          ult:{dmg:38, cost:90, effect:'stun', height:'mid'}
         }},
-      { id:2, name:'BEAST WARRIOR', style:'Wild Fury', color:'#27ae60', secColor:'#f1c40f', hp:115, atk:15, def:10, spd:5,
+      { id:2, name:'BEAST WARRIOR', color:'#27ae60', secColor:'#f1c40f', hp:115, atk:15, def:10,
         moves: {
-          lp:{dmg:6, range:60, speed:12, kb:3, type:'punch', height:'mid'},
-          hp:{dmg:10, range:70, speed:18, kb:6, type:'punch', height:'high'},
-          lk:{dmg:7, range:65, speed:14, kb:4, type:'kick', height:'low'},
-          hk:{dmg:12, range:75, speed:20, kb:8, type:'kick', height:'mid'},
-          projectile:{dmg:9, cost:20, name:'ROCK THROW', effect:'bleed', height:'mid'},
-          antiAir:{dmg:11, cost:25, name:'CLAW UPPER', effect:'bleed', height:'high'},
-          mobility:{dmg:7, cost:15, name:'BEAST LEAP', height:'mid'},
-          ultimate:{dmg:45, cost:90, name:'BEAST ROAR', effect:'bleed', height:'mid'}
+          lp:{dmg:6, range:65, speed:12, kb:3, height:'mid'},
+          hp:{dmg:10, range:75, speed:18, kb:6, height:'high'},
+          lk:{dmg:7, range:70, speed:14, kb:4, height:'low'},
+          hk:{dmg:12, range:80, speed:20, kb:8, height:'mid'},
+          sp:{dmg:9, cost:20, effect:'bleed', height:'mid'},
+          ult:{dmg:45, cost:90, effect:'bleed', height:'mid'}
         }}
     ];
 
@@ -99,10 +93,13 @@
     let selP1 = 0, selP2 = 1;
     let currentStage = STAGES[0];
     let difficulty = 'Normal';
-    let frame = 0, shakeTimer = 0, slowmoTimer = 0;
+    let frame = 0, shakeTimer = 0;
     let particles = [], hitEffects = [];
     let winner = null, winTimer = 0;
-    let comboCount = 0, comboTimer = 0, comboFlash = 0;
+    let comboCount = 0, comboTimer = 0;
+    let paused = false;
+    let pauseMenuOption = 0;
+    let lastTapTime = 0; // Untuk double-tap pause
 
     function spawnParticles(x,y,count,color,spread,life){
       for(let i=0;i<count;i++) particles.push({x,y,color,vx:(Math.random()-0.5)*(spread||8),vy:(Math.random()-0.5)*(spread||8)-4,life:life||25,maxLife:life||25,size:2+Math.random()*6});
@@ -117,30 +114,24 @@
         this.w = 70; this.h = 100; this.hp = data.hp; this.maxHp = data.hp;
         this.meter = 0; this.dir = dir; this.vx = 0; this.vy = 0;
         this.grounded = true; this.blocking = false; this.crouching = false;
-        this.rolling = false; this.rollCD = 0;
-        this.atkCD = 0; this.stun = 0; this.specialCD = 0;
+        this.atkCD = 0; this.stun = 0;
         this.state = 'idle'; this.animTimer = 0; this.invincible = false;
-        this.attackPhase = 0; this.attackPhaseTimer = 0; this.attackType = 'none';
-        this.attackLunge = 0; this.weaponTrail = 0;
-        this.bodyParts = { bodySquash:0, bodyLean:0 };
+        this.attackPhase = 0; this.attackPhaseTimer = 0; this.attackLunge = 0;
         this.burning = 0; this.bleeding = 0; this.frozen = 0;
-        this.aiTimer = 0; this.aiCooldown = 0;
+        this.aiCooldown = 0;
         this.projectile = null;
       }
 
       update() {
+        if(paused) return;
         this.animTimer++;
-        // Status effects
         if(this.burning>0){ this.burning--; if(this.animTimer%10===0) this.hp=Math.max(0,this.hp-1); }
         if(this.bleeding>0){ this.bleeding--; if(this.animTimer%8===0) this.hp=Math.max(0,this.hp-3); }
         if(this.frozen>0){ this.frozen--; this.vx*=0.5; }
         if(this.stun>0) this.stun--;
         if(this.atkCD>0) this.atkCD--;
-        if(this.specialCD>0) this.specialCD--;
-        if(this.rollCD>0) this.rollCD--;
         if(this.aiCooldown>0) this.aiCooldown--;
 
-        // Attack animation
         if(this.attackPhaseTimer>0){
           this.attackPhaseTimer--;
           if(this.attackPhase===1) this.attackLunge = -8;
@@ -151,11 +142,10 @@
         } else { this.attackLunge *= 0.8; }
 
         this.x += this.vx;
-        if(!this.grounded){ this.vy+=0.8; this.y+=this.vy; if(this.y>=this.groundY){ this.y=this.groundY; this.vy=0; this.grounded=true; this.rolling=false; this.invincible=false; } }
+        if(!this.grounded){ this.vy+=0.8; this.y+=this.vy; if(this.y>=this.groundY){ this.y=this.groundY; this.vy=0; this.grounded=true; this.invincible=false; } }
         if(this.x<20) this.x=20; if(this.x>canvas.width-90) this.x=canvas.width-90;
         if(this.atkCD<=0 && this.stun<=0 && this.attackPhase===0) this.state='idle';
         
-        // Update projectile
         if(this.projectile){
           this.projectile.x += this.projectile.vx;
           if(this.projectile.x < -50 || this.projectile.x > canvas.width+50) this.projectile = null;
@@ -167,7 +157,7 @@
         else if(this.attackPhase===2){ this.attackPhase=3; this.attackPhaseTimer=5; }
       }
       resetAttack(){
-        this.attackPhase=0; this.attackPhaseTimer=0; this.attackType='none'; this.attackLunge=0;
+        this.attackPhase=0; this.attackPhaseTimer=0; this.attackLunge=0;
         if(this.atkCD<=0 && this.stun<=0) this.state='idle';
       }
 
@@ -177,43 +167,20 @@
 
       hit(dmg, kb, effect, attackerHeight) {
         if(this.invincible) return false;
-        
         let finalDmg = dmg;
-        let hitSuccess = true;
-        
-        // Check height evasion
         if(this.crouching && (attackerHeight === 'high' || attackerHeight === 'mid')) {
-          // Crouching avoids high attacks completely, reduces mid attacks
-          if(attackerHeight === 'high') {
-            finalDmg = 0;
-            hitSuccess = false;
-            spawnParticles(this.x+35, this.y+30, 5, '#aaa', 3, 15);
-          } else {
-            finalDmg *= 0.5;
-          }
+          if(attackerHeight === 'high') { finalDmg = 0; spawnParticles(this.x+35, this.y+30, 5, '#aaa', 3, 15); return false; }
+          else finalDmg *= 0.5;
         }
         if(!this.grounded && attackerHeight === 'low') {
-          // Jumping avoids low attacks
-          finalDmg = 0;
-          hitSuccess = false;
-          spawnParticles(this.x+35, this.y+60, 5, '#aaa', 3, 15);
+          finalDmg = 0; spawnParticles(this.x+35, this.y+60, 5, '#aaa', 3, 15); return false;
         }
-        
-        if(this.blocking && hitSuccess) {
-          finalDmg *= 0.2;
-          spawnParticles(this.x+35, this.y+40, 5, '#3498db', 4, 12);
-          sfx(250,'triangle',0.08,0.06);
-        }
-        
-        if(hitSuccess && finalDmg > 0) {
+        if(this.blocking) { finalDmg *= 0.2; spawnParticles(this.x+35, this.y+40, 5, '#3498db', 4, 12); sfx(250,'triangle',0.08,0.06); }
+        if(finalDmg > 0) {
           this.hp = Math.max(0, this.hp - finalDmg);
           this.meter = Math.min(100, this.meter + finalDmg*0.8);
           this.stun = (kb>5) ? 15 : 8;
-          if(effect && !this.blocking){
-            if(effect==='fire') this.burning=60;
-            if(effect==='stun') this.stun=25;
-            if(effect==='bleed') this.bleeding=50;
-          }
+          if(effect && !this.blocking){ if(effect==='fire') this.burning=60; if(effect==='stun') this.stun=25; if(effect==='bleed') this.bleeding=50; }
           if(kb && !this.blocking){ this.vx = kb*4; if(kb>6){ this.vy=-5; this.grounded=false; } }
           spawnHitEffect(this.x+35, this.y, finalDmg, '#fff');
           spawnParticles(this.x+35, this.y+40, 8, '#fff', 5, 15);
@@ -272,31 +239,38 @@
       p1=new Fighter(FIGHTERS[selP1], canvas.width*0.2, 1);
       p2=new Fighter(FIGHTERS[selP2], canvas.width*0.7, -1);
       p1.groundY=p2.groundY=canvas.height-130; p1.y=p1.groundY; p2.y=p2.groundY;
-      particles=[]; hitEffects=[]; shakeTimer=0; winner=null; winTimer=0; comboCount=0;
+      particles=[]; hitEffects=[]; shakeTimer=0; winner=null; winTimer=0; comboCount=0; paused=false; pauseMenuOption=0;
     }
 
+    // Tombol mobile yang lebih besar
     let buttons=[];
     function createButtons(){
-      let w=canvas.width, h=canvas.height, bs=Math.min(60, h*0.12), gap=8;
+      let w=canvas.width, h=canvas.height;
+      let bs = Math.min(75, h*0.15); // Lebih besar untuk jempol
+      let gap = 12;
+      let bottomY = h - bs*3 - gap*3;
+      
       buttons=[
-        {id:'left', x:gap, y:h-bs*2-gap*2, w:bs, h:bs, label:'◀'},
-        {id:'right', x:gap*2+bs, y:h-bs*2-gap*2, w:bs, h:bs, label:'▶'},
-        {id:'jump', x:gap, y:h-bs*3-gap*3, w:bs, h:bs, label:'⬆'},
-        {id:'crouch', x:gap*2+bs, y:h-bs*3-gap*3, w:bs, h:bs, label:'⬇'},
-        {id:'block', x:gap, y:h-bs-gap, w:bs*2+gap, h:bs*0.6, label:'🛡'},
-        {id:'lp', x:w-bs*2-gap*2, y:h-bs*2-gap*2, w:bs, h:bs, label:'LP'},
-        {id:'hp', x:w-bs-gap, y:h-bs*2-gap*2, w:bs, h:bs, label:'HP'},
-        {id:'lk', x:w-bs*2-gap*2, y:h-bs*3-gap*3, w:bs, h:bs, label:'LK'},
-        {id:'hk', x:w-bs-gap, y:h-bs*3-gap*3, w:bs, h:bs, label:'HK'},
-        {id:'sp1', x:w-bs*2-gap*2, y:h-bs*4-gap*4, w:bs, h:bs, label:'⚡'},
-        {id:'sp2', x:w-bs-gap, y:h-bs*4-gap*4, w:bs, h:bs, label:'💥'},
+        // MOVEMENT - Kiri bawah (D-Pad style)
+        {id:'left', x:gap, y:bottomY+bs+gap, w:bs, h:bs, label:'◀', color:'rgba(255,255,255,0.15)'},
+        {id:'right', x:gap*2+bs, y:bottomY+bs+gap, w:bs, h:bs, label:'▶', color:'rgba(255,255,255,0.15)'},
+        {id:'jump', x:gap, y:bottomY, w:bs, h:bs, label:'⬆', color:'rgba(46,204,113,0.2)'},
+        {id:'crouch', x:gap*2+bs, y:bottomY, w:bs, h:bs, label:'⬇', color:'rgba(46,204,113,0.2)'},
+        {id:'block', x:gap, y:h-bs-gap, w:bs*2+gap, h:bs*0.7, label:'🛡 BLOCK', color:'rgba(41,128,185,0.2)'},
+        // ATTACKS - Kanan bawah (Action buttons)
+        {id:'lp', x:w-bs*2-gap*2, y:bottomY+bs+gap, w:bs, h:bs, label:'LP', color:'rgba(231,76,60,0.2)'},
+        {id:'hp', x:w-bs-gap, y:bottomY+bs+gap, w:bs, h:bs, label:'HP', color:'rgba(192,57,43,0.2)'},
+        {id:'lk', x:w-bs*2-gap*2, y:bottomY, w:bs, h:bs, label:'LK', color:'rgba(230,126,34,0.2)'},
+        {id:'hk', x:w-bs-gap, y:bottomY, w:bs, h:bs, label:'HK', color:'rgba(211,84,0,0.2)'},
+        {id:'sp', x:w-bs*2-gap*2, y:bottomY-bs-gap, w:bs, h:bs, label:'⚡SP', color:'rgba(155,89,182,0.25)'},
+        {id:'ult', x:w-bs-gap, y:bottomY-bs-gap, w:bs, h:bs, label:'💥ULT', color:'rgba(243,156,18,0.25)'},
       ];
     }
 
     function getButton(x,y){ return buttons.find(b=>x>=b.x&&x<=b.x+b.w&&y>=b.y&&y<=b.y+b.h); }
 
     function performAttack(attacker, defender, moveKey) {
-      if(!attacker || attacker.stun>0 || attacker.attackPhase!==0 || attacker.atkCD>0) return;
+      if(!attacker || attacker.stun>0 || attacker.attackPhase!==0 || attacker.atkCD>0 || paused) return;
       let move = attacker.data.moves[moveKey];
       if(!move) return;
       if(move.cost && attacker.meter < move.cost) return;
@@ -305,30 +279,23 @@
       attacker.state = 'attack';
       attacker.attackPhase = 1;
       attacker.attackPhaseTimer = 6;
-      attacker.attackType = moveKey;
       if(move.cost) attacker.meter -= move.cost;
       
       let dist = Math.abs(attacker.x - defender.x);
       if(dist < move.range + 30) {
         let hitResult = defender.hit(move.dmg, move.kb||3, move.effect, move.height);
-        if(hitResult) {
-          comboCount++;
-          comboTimer = 45;
-          if(comboCount>=5) shakeTimer = 5;
-        }
+        if(hitResult) { comboCount++; comboTimer = 45; if(comboCount>=5) shakeTimer = 5; }
       }
       
-      if(moveKey==='projectile' && !attacker.projectile){
+      if(moveKey==='sp' && !attacker.projectile){
         attacker.projectile = { x: attacker.x+35, y: attacker.y+40, vx: attacker.dir*7, dmg: move.dmg, effect: move.effect, height: move.height };
       }
-      if(moveKey==='mobility'){ attacker.vx = attacker.dir*10; attacker.invincible = true; setTimeout(()=>{if(attacker)attacker.invincible=false;},200); }
-      
       sfx(move.cost?350:120, 'square', 0.12, 0.1);
-      if(moveKey==='ultimate'){ sfx(40,'sawtooth',0.5,0.2); shakeTimer=25; }
+      if(moveKey==='ult'){ sfx(40,'sawtooth',0.5,0.2); shakeTimer=25; }
     }
 
     function doAction(id){
-      if(!p1||p1.stun>0||winner) return;
+      if(!p1||p1.stun>0||winner||paused) return;
       switch(id){
         case 'left': p1.vx=-5; p1.dir=-1; p1.state='walk'; break;
         case 'right': p1.vx=5; p1.dir=1; p1.state='walk'; break;
@@ -339,57 +306,39 @@
         case 'hp': performAttack(p1,p2,'hp'); break;
         case 'lk': performAttack(p1,p2,'lk'); break;
         case 'hk': performAttack(p1,p2,'hk'); break;
-        case 'sp1': performAttack(p1,p2,'projectile'); break;
-        case 'sp2': if(p1.meter>=p1.data.moves.ultimate.cost) performAttack(p1,p2,'ultimate'); break;
+        case 'sp': performAttack(p1,p2,'sp'); break;
+        case 'ult': if(p1.meter>=p1.data.moves.ult.cost) performAttack(p1,p2,'ult'); break;
       }
     }
 
     function aiThink(){
-      if(!p2||p2.stun>0||winner) return;
+      if(!p2||p2.stun>0||winner||paused) return;
       if(p2.aiCooldown > 0) return;
-      
-      let dx = p1.x - p2.x;
-      let dist = Math.abs(dx);
-      p2.dir = dx>0 ? 1 : -1;
-      p2.vx = 0;
-      p2.blocking = false;
-      
-      // AI decision making with cooldown
-      let actionDelay = difficulty==='Easy' ? 40 : difficulty==='Hard' ? 15 : 25;
+      let dx = p1.x - p2.x, dist = Math.abs(dx);
+      p2.dir = dx>0 ? 1 : -1; p2.vx = 0; p2.blocking = false;
+      let actionDelay = difficulty==='Easy' ? 50 : difficulty==='Hard' ? 20 : 32;
       if(frame % actionDelay !== 0) return;
-      
       let r = Math.random();
-      
-      // Defensive behavior
-      if(p1.attackPhase === 2 && dist < 150 && r < 0.5) {
-        p2.blocking = true;
-        p2.aiCooldown = 20;
-        return;
-      }
-      
+      if(p1.attackPhase === 2 && dist < 150 && r < 0.5) { p2.blocking = true; p2.aiCooldown = 25; return; }
       if(dist < 90) {
-        // Close range
-        if(r < 0.25) performAttack(p2, p1, 'lp');
-        else if(r < 0.45) performAttack(p2, p1, 'lk');
-        else if(r < 0.55) performAttack(p2, p1, 'hp');
-        else if(r < 0.65 && p2.meter >= p2.data.moves.projectile.cost) performAttack(p2, p1, 'projectile');
-        else if(r < 0.75) { p2.blocking = true; }
+        if(r < 0.3) performAttack(p2, p1, 'lp');
+        else if(r < 0.5) performAttack(p2, p1, 'lk');
+        else if(r < 0.6) performAttack(p2, p1, 'hp');
+        else if(r < 0.7 && p2.meter >= 20) performAttack(p2, p1, 'sp');
+        else if(r < 0.8) { p2.blocking = true; }
         else { p2.vx = p2.dir * 3; }
       } else if(dist < 200) {
-        // Mid range
-        if(r < 0.3) { p2.vx = p2.dir * 4; }
-        else if(r < 0.5) performAttack(p2, p1, 'hp');
-        else if(r < 0.65 && p2.meter >= p2.data.moves.ultimate.cost) performAttack(p2, p1, 'ultimate');
-        else if(r < 0.8) p2.jump();
+        if(r < 0.35) { p2.vx = p2.dir * 4; }
+        else if(r < 0.55) performAttack(p2, p1, 'hp');
+        else if(r < 0.7 && p2.meter >= 90) performAttack(p2, p1, 'ult');
+        else if(r < 0.85) p2.jump();
         else p2.blocking = true;
       } else {
-        // Far range
         p2.vx = p2.dir * 5;
-        if(r < 0.3) p2.jump();
-        if(r < 0.5 && p2.meter >= p2.data.moves.projectile.cost) performAttack(p2, p1, 'projectile');
+        if(r < 0.35) p2.jump();
+        if(r < 0.55 && p2.meter >= 20) performAttack(p2, p1, 'sp');
       }
-      
-      p2.aiCooldown = difficulty==='Easy' ? 35 : difficulty==='Hard' ? 10 : 20;
+      p2.aiCooldown = difficulty==='Easy' ? 45 : difficulty==='Hard' ? 15 : 25;
     }
 
     function drawStage(){
@@ -400,49 +349,73 @@
     }
     function drawUI(){
       if(!p1||!p2) return;
-      let bw=Math.min(250,canvas.width*0.25), bh=16, y=15;
-      ctx.fillStyle='rgba(0,0,0,0.7)'; ctx.fillRect(10,y-2,bw+4,bh+4);
-      let hp1w=bw*(p1.hp/p1.maxHp); ctx.fillStyle=p1.hp/p1.maxHp>0.5?'#2ecc71':'#e74c3c'; ctx.fillRect(12,y,hp1w,bh);
-      ctx.strokeStyle='#fff'; ctx.strokeRect(12,y,bw,bh);
-      ctx.fillStyle='#fff'; ctx.font='bold 12px Arial'; ctx.fillText(p1.data.name,12,y-4);
-      let px=canvas.width-bw-12; ctx.fillStyle='rgba(0,0,0,0.7)'; ctx.fillRect(px-2,y-2,bw+4,bh+4);
+      let bw=Math.min(280,canvas.width*0.3), bh=20, y=10;
+      // P1 HP
+      ctx.fillStyle='rgba(0,0,0,0.7)'; ctx.fillRect(8,y-2,bw+4,bh+4);
+      let hp1w=bw*(p1.hp/p1.maxHp); ctx.fillStyle=p1.hp/p1.maxHp>0.5?'#2ecc71':'#e74c3c'; ctx.fillRect(10,y,hp1w,bh);
+      ctx.strokeStyle='#fff'; ctx.lineWidth=2; ctx.strokeRect(10,y,bw,bh);
+      ctx.fillStyle='#fff'; ctx.font='bold 13px Arial'; ctx.fillText(p1.data.name,10,y-5);
+      ctx.font='10px Arial'; ctx.fillText('METER:'+Math.floor(p1.meter),10,y+bh+14);
+      // P2 HP
+      let px=canvas.width-bw-10;
+      ctx.fillStyle='rgba(0,0,0,0.7)'; ctx.fillRect(px-2,y-2,bw+4,bh+4);
       let hp2w=bw*(p2.hp/p2.maxHp); ctx.fillStyle=p2.hp/p2.maxHp>0.5?'#2ecc71':'#e74c3c'; ctx.fillRect(px+bw-hp2w,y,hp2w,bh);
-      ctx.strokeRect(px,y,bw,bh); ctx.textAlign='right'; ctx.fillText(p2.data.name,canvas.width-12,y-4); ctx.textAlign='left';
-      if(comboCount>1&&comboTimer>0){ ctx.fillStyle='#ff0'; ctx.font='bold 20px Arial'; ctx.textAlign='center'; ctx.fillText(comboCount+' HIT!',canvas.width/2,y+35); ctx.textAlign='left'; }
+      ctx.strokeRect(px,y,bw,bh);
+      ctx.fillStyle='#fff'; ctx.font='bold 13px Arial'; ctx.textAlign='right'; ctx.fillText(p2.data.name,canvas.width-10,y-5);
+      ctx.textAlign='left'; ctx.font='10px Arial'; ctx.textAlign='right'; ctx.fillText('METER:'+Math.floor(p2.meter),canvas.width-10,y+bh+14); ctx.textAlign='left';
+      // Combo
+      if(comboCount>1&&comboTimer>0){ ctx.fillStyle='#ff0'; ctx.font='bold 22px Arial'; ctx.textAlign='center'; ctx.fillText(comboCount+' HIT!',canvas.width/2,y+40); ctx.textAlign='left'; }
+      // Pause hint
+      ctx.fillStyle='rgba(255,255,255,0.4)'; ctx.font='10px Arial'; ctx.textAlign='center'; ctx.fillText('DOUBLE TAP TOP TO PAUSE',canvas.width/2,canvas.height-8); ctx.textAlign='left';
     }
     function drawButtons(){
-      buttons.forEach(b=>{ ctx.fillStyle='rgba(255,255,255,0.2)'; ctx.fillRect(b.x,b.y,b.w,b.h); ctx.fillStyle='#fff'; ctx.font=Math.floor(b.h*0.35)+'px Arial'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText(b.label,b.x+b.w/2,b.y+b.h/2); });
+      buttons.forEach(b=>{
+        ctx.fillStyle = b.color;
+        ctx.fillRect(b.x, b.y, b.w, b.h);
+        ctx.strokeStyle = 'rgba(255,255,255,0.35)';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(b.x, b.y, b.w, b.h);
+        ctx.fillStyle = '#fff';
+        ctx.font = `bold ${Math.floor(b.h*0.38)}px Arial`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(b.label, b.x+b.w/2, b.y+b.h/2);
+      });
+      ctx.textBaseline = 'alphabetic';
+    }
+    function drawPauseMenu(){
+      ctx.fillStyle='rgba(0,0,0,0.85)'; ctx.fillRect(0,0,canvas.width,canvas.height);
+      ctx.fillStyle='#fff'; ctx.font='bold 40px Arial'; ctx.textAlign='center'; ctx.fillText('PAUSED',canvas.width/2,canvas.height*0.3);
+      let items = ['▶ RESUME', '🏠 QUIT TO MENU'];
+      items.forEach((item,i)=>{
+        let iy = canvas.height*0.5 + i*75;
+        if(pauseMenuOption===i){ ctx.fillStyle='rgba(233,69,96,0.5)'; ctx.fillRect(canvas.width/2-130,iy-28,260,56); ctx.strokeStyle='#e94560'; ctx.lineWidth=3; ctx.strokeRect(canvas.width/2-130,iy-28,260,56); }
+        ctx.fillStyle = pauseMenuOption===i ? '#e94560' : '#ccc';
+        ctx.font = 'bold 28px Arial';
+        ctx.fillText(item, canvas.width/2, iy+8);
+      });
+      ctx.textAlign='left';
     }
     function drawMenu(){
       ctx.fillStyle='#0a0a1a'; ctx.fillRect(0,0,canvas.width,canvas.height);
-      ctx.fillStyle='#fff'; ctx.font='bold 40px Arial'; ctx.textAlign='center'; ctx.fillText('ARCADE COMBAT',canvas.width/2,canvas.height*0.25);
-      let items=['FIGHT','SELECT','DIFFICULTY: '+difficulty];
-      items.forEach((item,i)=>{ let iy=canvas.height*0.45+i*65; ctx.fillStyle=menuOption===i?'#e94560':'#ccc'; ctx.font='bold 26px Arial'; ctx.fillText(item,canvas.width/2,iy); });
+      ctx.fillStyle='#fff'; ctx.font='bold 38px Arial'; ctx.textAlign='center'; ctx.fillText('ARCADE COMBAT',canvas.width/2,canvas.height*0.25);
+      let items=['⚔️ FIGHT','👥 SELECT','⚙️ DIFFICULTY: '+difficulty];
+      items.forEach((item,i)=>{ let iy=canvas.height*0.45+i*70; ctx.fillStyle=menuOption===i?'#e94560':'#ccc'; ctx.font='bold 26px Arial'; ctx.fillText(item,canvas.width/2,iy); });
     }
     function drawSelect(){
       ctx.fillStyle='#111'; ctx.fillRect(0,0,canvas.width,canvas.height);
       ctx.fillStyle='#fff'; ctx.font='bold 22px Arial'; ctx.textAlign='center'; ctx.fillText('SELECT FIGHTERS',canvas.width/2,30);
-      let cols=3, cw=Math.min(120,(canvas.width-50)/cols), ch=cw*1.3, gap=12, totalW=cw*cols+gap*(cols-1), sx=(canvas.width-totalW)/2, sy=55;
-      FIGHTERS.forEach((f,i)=>{ let x=sx+i*(cw+gap); ctx.fillStyle='#1a1a2e'; ctx.fillRect(x,sy,cw,ch); ctx.fillStyle=f.color; ctx.fillRect(x+3,sy+3,cw-6,ch-30); ctx.fillStyle='#fff'; ctx.font='bold 11px Arial'; ctx.fillText(f.name,x+cw/2,sy+ch-12); if(i===selP1){ ctx.strokeStyle='#ff0'; ctx.lineWidth=3; ctx.strokeRect(x-2,sy-2,cw+4,ch+4); } if(i===selP2){ ctx.strokeStyle='#3498db'; ctx.lineWidth=3; ctx.strokeRect(x-2,sy-2,cw+4,ch+4); } });
-      ctx.fillStyle='#e74c3c'; ctx.fillRect(canvas.width/2-50,sy+ch+25,100,35); ctx.fillStyle='#fff'; ctx.font='bold 16px Arial'; ctx.fillText('READY',canvas.width/2,sy+ch+47);
+      let cols=3, cw=Math.min(130,(canvas.width-50)/cols), ch=cw*1.3, gap=15, totalW=cw*cols+gap*(cols-1), sx=(canvas.width-totalW)/2, sy=55;
+      FIGHTERS.forEach((f,i)=>{ let x=sx+i*(cw+gap); ctx.fillStyle='#1a1a2e'; ctx.fillRect(x,sy,cw,ch); ctx.fillStyle=f.color; ctx.fillRect(x+3,sy+3,cw-6,ch-30); ctx.fillStyle='#fff'; ctx.font='bold 12px Arial'; ctx.fillText(f.name,x+cw/2,sy+ch-12); if(i===selP1){ ctx.strokeStyle='#ff0'; ctx.lineWidth=4; ctx.strokeRect(x-3,sy-3,cw+6,ch+6); } if(i===selP2){ ctx.strokeStyle='#3498db'; ctx.lineWidth=4; ctx.strokeRect(x-3,sy-3,cw+6,ch+6); } });
+      ctx.fillStyle='#e74c3c'; ctx.fillRect(canvas.width/2-60,sy+ch+25,120,40); ctx.fillStyle='#fff'; ctx.font='bold 18px Arial'; ctx.fillText('READY!',canvas.width/2,sy+ch+50);
     }
 
     function update(){
-      if(gameState===STATE.FIGHT&&!winner){
+      if(gameState===STATE.FIGHT && !winner && !paused){
         if(shakeTimer>0) shakeTimer--;
         if(comboTimer>0){ comboTimer--; if(comboTimer<=0) comboCount=0; }
         p1?.update(); p2?.update(); aiThink();
-        // Projectile collision
-        [p1,p2].forEach(f=>{ 
-          if(f&&f.projectile){ 
-            let proj=f.projectile; 
-            let enemy = f===p1?p2:p1; 
-            if(enemy && Math.abs(proj.x-enemy.x-35)<40 && Math.abs(proj.y-enemy.y-40)<50){ 
-              enemy.hit(proj.dmg,3,proj.effect, proj.height); 
-              f.projectile=null; 
-            } 
-          } 
-        });
+        [p1,p2].forEach(f=>{ if(f&&f.projectile){ let proj=f.projectile; let enemy = f===p1?p2:p1; if(enemy && Math.abs(proj.x-enemy.x-35)<45 && Math.abs(proj.y-enemy.y-45)<55){ enemy.hit(proj.dmg,3,proj.effect, proj.height); f.projectile=null; } } });
         particles=particles.filter(p=>{ p.x+=p.vx; p.y+=p.vy; p.vy+=0.12; p.life--; return p.life>0; });
         hitEffects=hitEffects.filter(e=>{ e.life--; if(e.vy)e.y+=e.vy; return e.life>0; });
         if(p1&&p1.hp<=0){ winner='CPU WINS!'; winTimer=150; }
@@ -457,39 +430,66 @@
       else if(gameState===STATE.FIGHT){
         drawStage(); 
         if(p2) p2.draw(ctx); if(p1) p1.draw(ctx);
-        [p1,p2].forEach(f=>{ if(f&&f.projectile){ let p=f.projectile; ctx.fillStyle='#ff0'; ctx.beginPath(); ctx.arc(p.x,p.y,7,0,Math.PI*2); ctx.fill(); } });
+        [p1,p2].forEach(f=>{ if(f&&f.projectile){ let p=f.projectile; ctx.fillStyle='#ff0'; ctx.beginPath(); ctx.arc(p.x,p.y,8,0,Math.PI*2); ctx.fill(); } });
         particles.forEach(p=>{ ctx.globalAlpha=p.life/p.maxLife; ctx.fillStyle=p.color; ctx.beginPath(); ctx.arc(p.x,p.y,p.size*(p.life/p.maxLife),0,Math.PI*2); ctx.fill(); });
         hitEffects.forEach(e=>{ ctx.fillStyle=e.color; ctx.globalAlpha=e.life/35; ctx.font='bold 18px Arial'; ctx.textAlign='center'; ctx.fillText(e.text,e.x,e.y); });
         ctx.globalAlpha=1; drawUI(); drawButtons();
         if(winner){ ctx.fillStyle='rgba(0,0,0,0.7)'; ctx.fillRect(0,0,canvas.width,canvas.height); ctx.fillStyle=winner==='YOU WIN!'?'#2ecc71':'#e74c3c'; ctx.font='bold 45px Arial'; ctx.textAlign='center'; ctx.fillText(winner,canvas.width/2,canvas.height/2); }
+        if(paused) drawPauseMenu();
       }
     }
     function loop(){ frame++; update(); draw(); requestAnimationFrame(loop); }
 
     function handleTap(x,y){
       initAudio();
+      if(gameState===STATE.FIGHT && paused){
+        let iy1=canvas.height*0.5, iy2=canvas.height*0.5+75;
+        if(y>=iy1-28&&y<=iy1+28){ paused=false; }
+        else if(y>=iy2-28&&y<=iy2+28){ paused=false; gameState=STATE.MENU; p1=null; p2=null; winner=null; }
+        return;
+      }
       if(gameState===STATE.MENU){
-        let iy1=canvas.height*0.45, iy2=canvas.height*0.45+65, iy3=canvas.height*0.45+130;
-        if(y>=iy1-25&&y<=iy1+25){ menuOption=0; currentStage=STAGES[Math.floor(Math.random()*STAGES.length)]; createPlayers(); createButtons(); gameState=STATE.FIGHT; }
-        else if(y>=iy2-25&&y<=iy2+25){ menuOption=1; gameState=STATE.SELECT; }
-        else if(y>=iy3-25&&y<=iy3+25){ difficulty = difficulty==='Easy'?'Normal':difficulty==='Normal'?'Hard':'Easy'; }
+        let iy1=canvas.height*0.45, iy2=canvas.height*0.45+70, iy3=canvas.height*0.45+140;
+        if(y>=iy1-28&&y<=iy1+28){ menuOption=0; currentStage=STAGES[Math.floor(Math.random()*STAGES.length)]; createPlayers(); createButtons(); gameState=STATE.FIGHT; }
+        else if(y>=iy2-28&&y<=iy2+28){ menuOption=1; gameState=STATE.SELECT; }
+        else if(y>=iy3-28&&y<=iy3+28){ difficulty = difficulty==='Easy'?'Normal':difficulty==='Normal'?'Hard':'Easy'; }
       } else if(gameState===STATE.SELECT){
-        let cols=3, cw=Math.min(120,(canvas.width-50)/cols), ch=cw*1.3, gap=12, totalW=cw*cols+gap*(cols-1), sx=(canvas.width-totalW)/2, sy=55;
-        if(x>=canvas.width/2-50&&x<=canvas.width/2+50&&y>=sy+ch+25&&y<=sy+ch+60){ currentStage=STAGES[Math.floor(Math.random()*STAGES.length)]; createPlayers(); createButtons(); gameState=STATE.FIGHT; return; }
+        let cols=3, cw=Math.min(130,(canvas.width-50)/cols), ch=cw*1.3, gap=15, totalW=cw*cols+gap*(cols-1), sx=(canvas.width-totalW)/2, sy=55;
+        if(x>=canvas.width/2-60&&x<=canvas.width/2+60&&y>=sy+ch+25&&y<=sy+ch+65){ currentStage=STAGES[Math.floor(Math.random()*STAGES.length)]; createPlayers(); createButtons(); gameState=STATE.FIGHT; return; }
         FIGHTERS.forEach((f,i)=>{ let fx=sx+i*(cw+gap); if(x>=fx&&x<=fx+cw&&y>=sy&&y<=sy+ch){ if(x<canvas.width/2) selP1=i; else selP2=i; } });
       }
     }
 
-    canvas.addEventListener('touchstart', e=>{ e.preventDefault(); let t=e.touches[0]; if(gameState===STATE.FIGHT){ let btn=getButton(t.clientX,t.clientY); if(btn) doAction(btn.id); } else handleTap(t.clientX,t.clientY); }, {passive:false});
-    canvas.addEventListener('touchend', e=>{ e.preventDefault(); if(gameState===STATE.FIGHT&&p1){ p1.vx=0; p1.blocking=false; p1.stand(); } });
-    canvas.addEventListener('click', e=>{ if(gameState!==STATE.FIGHT) handleTap(e.clientX,e.clientY); });
-    window.addEventListener('keydown', e=>{
-      initAudio();
-      if(gameState===STATE.MENU){ if(e.key==='ArrowDown') menuOption=(menuOption+1)%3; if(e.key==='ArrowUp') menuOption=(menuOption-1+3)%3; if(e.key==='Enter'){ if(menuOption===0){ currentStage=STAGES[Math.floor(Math.random()*STAGES.length)]; createPlayers(); createButtons(); gameState=STATE.FIGHT; } else if(menuOption===1) gameState=STATE.SELECT; else difficulty = difficulty==='Easy'?'Normal':difficulty==='Normal'?'Hard':'Easy'; } }
-      else if(gameState===STATE.SELECT){ if(e.key==='ArrowLeft') selP1=(selP1-1+3)%3; if(e.key==='ArrowRight') selP1=(selP1+1)%3; if(e.key==='ArrowUp') selP2=(selP2-1+3)%3; if(e.key==='ArrowDown') selP2=(selP2+1)%3; if(e.key==='Enter'){ currentStage=STAGES[Math.floor(Math.random()*STAGES.length)]; createPlayers(); createButtons(); gameState=STATE.FIGHT; } }
-      else if(gameState===STATE.FIGHT){ switch(e.key){ case 'a': case 'ArrowLeft': doAction('left'); break; case 'd': case 'ArrowRight': doAction('right'); break; case 'w': case 'ArrowUp': doAction('jump'); break; case 's': case 'ArrowDown': doAction('crouch'); break; case 'q': doAction('block'); break; case 'j': doAction('lp'); break; case 'k': doAction('hp'); break; case 'u': doAction('lk'); break; case 'i': doAction('hk'); break; case '1': doAction('sp1'); break; case '2': doAction('sp2'); break; } }
+    canvas.addEventListener('touchstart', e=>{
+      e.preventDefault();
+      let t = e.touches[0];
+      if(gameState===STATE.FIGHT && !winner){
+        if(paused){ handleTap(t.clientX, t.clientY); return; }
+        // Double-tap detection untuk pause (area atas: y < 25% layar)
+        if(t.clientY < canvas.height*0.25){
+          let now = Date.now();
+          if(now - lastTapTime < 350) { paused = true; pauseMenuOption = 0; lastTapTime = 0; return; }
+          lastTapTime = now;
+          return;
+        }
+        lastTapTime = 0;
+        let btn = getButton(t.clientX, t.clientY);
+        if(btn) doAction(btn.id);
+      } else handleTap(t.clientX, t.clientY);
+    }, {passive:false});
+    canvas.addEventListener('touchmove', e=>{
+      e.preventDefault();
+      if(gameState===STATE.FIGHT && !winner && !paused){
+        let t = e.touches[0];
+        let btn = getButton(t.clientX, t.clientY);
+        if(btn && ['left','right','block'].includes(btn.id)) doAction(btn.id);
+      }
+    }, {passive:false});
+    canvas.addEventListener('touchend', e=>{ 
+      e.preventDefault(); 
+      if(gameState===STATE.FIGHT&&p1&&!paused){ p1.vx=0; p1.blocking=false; p1.stand(); } 
     });
-    window.addEventListener('keyup', e=>{ if(gameState===STATE.FIGHT&&p1){ if(['a','d','ArrowLeft','ArrowRight'].includes(e.key)) p1.vx=0; if(e.key==='s'||e.key==='ArrowDown') p1.stand(); if(e.key==='q') p1.blocking=false; } });
+    canvas.addEventListener('click', e=>{ if(gameState!==STATE.FIGHT) handleTap(e.clientX,e.clientY); });
 
     resizeCanvas(); loop();
   })();
