@@ -671,6 +671,431 @@ html, body {
 /* Hide scrollbar but allow scroll */
 .scrollable { overflow-y: auto; }
 .scrollable::-webkit-scrollbar { display: none; }
+
+<!-- =========================================================
+  PASTE INI KE DALAM <style> ... </style> — PALING BAWAH
+  (sebelum tag </style> penutup)
+========================================================= -->
+<style id="PASTE_INTO_STYLE_TAG">
+
+/* ============================================================
+   RESPONSIVE FIX — WebView / Mobile App
+   Tempel ini di paling bawah blok <style> di index.html
+   ============================================================ */
+
+/* === BASE: pastikan semua elemen tak overflow layar === */
+*, *::before, *::after {
+  max-width: 100%;
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* === SCREEN: isi penuh layar, scroll internal === */
+.screen {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  padding: env(safe-area-inset-top) env(safe-area-inset-right)
+           env(safe-area-inset-bottom) env(safe-area-inset-left);
+}
+
+/* === MENU UTAMA === */
+#screen-menu {
+  padding: max(8px, env(safe-area-inset-top)) 12px
+           max(8px, env(safe-area-inset-bottom)) 12px;
+  justify-content: center;
+  gap: 0;
+  overflow-y: auto;
+}
+
+.menu-logo {
+  margin-bottom: clamp(8px, 2vh, 20px);
+}
+
+.menu-snake-emoji {
+  font-size: clamp(28px, 6vw, 52px);
+  margin-bottom: 4px;
+}
+
+.menu-logo h1 {
+  font-size: clamp(20px, 5vw, 40px);
+}
+
+.menu-logo .logo-sub {
+  font-size: clamp(9px, 2vw, 13px);
+}
+
+.menu-box {
+  padding: clamp(12px, 3vw, 28px) clamp(14px, 4vw, 36px);
+  min-width: unset;
+  max-width: min(95vw, 380px);
+  width: 92vw;
+}
+
+.menu-btn {
+  padding: clamp(10px, 2.5vw, 14px) clamp(12px, 3vw, 20px);
+  margin: clamp(3px, 0.8vw, 6px) 0;
+  font-size: clamp(12px, 3.2vw, 16px);
+}
+
+.menu-btn .btn-icon {
+  font-size: clamp(14px, 3.5vw, 20px);
+}
+
+/* === SCREEN BOX (difficulty, stage, scores, dll) === */
+.screen-box {
+  padding: clamp(12px, 3vw, 22px) clamp(14px, 3.5vw, 26px);
+  width: min(96vw, 520px);
+  max-height: calc(100dvh - 20px);
+  max-height: calc(100vh - 20px); /* fallback */
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Safe area support untuk notch/status bar */
+@supports (padding: max(0px)) {
+  .screen-box {
+    max-height: calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 16px);
+  }
+}
+
+/* === DIFFICULTY GRID === */
+.diff-grid {
+  gap: clamp(8px, 2vw, 12px);
+  margin-top: clamp(10px, 2vh, 16px);
+}
+
+.diff-card {
+  padding: clamp(12px, 3vw, 20px) clamp(8px, 2vw, 14px);
+  font-size: clamp(11px, 3vw, 15px);
+}
+
+.diff-card .diff-icon {
+  font-size: clamp(22px, 5vw, 32px);
+}
+
+.diff-sub {
+  font-size: clamp(9px, 2vw, 11px);
+}
+
+/* === STAGE GRID === */
+.stage-grid {
+  grid-template-columns: repeat(auto-fill, minmax(clamp(70px, 22vw, 100px), 1fr));
+  gap: clamp(6px, 2vw, 10px);
+  margin-top: clamp(10px, 2vh, 14px);
+}
+
+.stage-card {
+  padding: clamp(8px, 2vw, 14px) clamp(4px, 1.5vw, 8px);
+}
+
+.stage-card .stage-icon {
+  font-size: clamp(18px, 5vw, 28px);
+}
+
+.stage-card .stage-name {
+  font-size: clamp(8px, 2.2vw, 11px);
+}
+
+/* === SCREEN TITLE === */
+.screen-title {
+  font-size: clamp(14px, 4vw, 22px);
+  margin-bottom: clamp(6px, 1.5vh, 10px);
+}
+
+/* === BACK BUTTON === */
+.back-btn {
+  padding: clamp(5px, 1.5vw, 8px) clamp(10px, 2.5vw, 16px);
+  font-size: clamp(11px, 2.8vw, 13px);
+  margin-bottom: clamp(6px, 1.5vh, 12px);
+}
+
+/* === SCORE TABS === */
+.score-tab {
+  padding: clamp(5px, 1.5vw, 7px) clamp(8px, 2.5vw, 14px);
+  font-size: clamp(9px, 2.5vw, 12px);
+}
+
+/* === ACHIEVEMENT LIST === */
+.ach-item {
+  padding: clamp(8px, 2vw, 12px) clamp(10px, 2.5vw, 16px);
+  gap: clamp(8px, 2vw, 12px);
+}
+
+.ach-icon {
+  font-size: clamp(20px, 5vw, 28px);
+}
+
+.ach-name {
+  font-size: clamp(11px, 3vw, 14px);
+}
+
+.ach-desc {
+  font-size: clamp(9px, 2.2vw, 11px);
+}
+
+/* === LANGUAGE OPTIONS === */
+.lang-btn {
+  padding: clamp(10px, 2.5vw, 16px) clamp(14px, 3.5vw, 20px);
+  gap: clamp(8px, 2vw, 14px);
+}
+
+.lang-flag {
+  font-size: clamp(20px, 5vw, 30px);
+}
+
+.lang-name {
+  font-size: clamp(13px, 3.5vw, 16px);
+}
+
+/* === GAME SCREEN === */
+#screen-game {
+  padding: 0;
+}
+
+/* HUD */
+#hud {
+  height: clamp(36px, 7vh, 48px);
+  padding: 4px clamp(6px, 2vw, 12px);
+  gap: clamp(4px, 1.5vw, 0px);
+  flex-shrink: 0;
+}
+
+.hud-label {
+  font-size: clamp(7px, 1.8vw, 9px);
+}
+
+.hud-val {
+  font-size: clamp(11px, 3vw, 15px);
+}
+
+#pause-btn {
+  font-size: clamp(14px, 3.5vw, 18px);
+  padding: 3px clamp(6px, 2vw, 10px);
+  min-width: 32px;
+  min-height: 28px;
+}
+
+/* Game canvas container */
+#game-container {
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+}
+
+/* Canvas — ukuran di-handle JS (lihat script fix) */
+#game-canvas {
+  display: block;
+  max-width: 100%;
+  max-height: 100%;
+}
+
+/* === D-PAD RESPONSIVE === */
+#dpad {
+  position: absolute;
+  bottom: max(10px, env(safe-area-inset-bottom));
+  left: max(10px, env(safe-area-inset-left));
+  /* Ukuran dinamis berdasarkan layar */
+  width: clamp(110px, 28vw, 160px);
+  height: clamp(110px, 28vw, 160px);
+  z-index: 30;
+}
+
+.dpad-btn {
+  width: clamp(36px, 9vw, 52px);
+  height: clamp(36px, 9vw, 52px);
+  font-size: clamp(16px, 4vw, 22px);
+  border-radius: 8px;
+}
+
+/* Posisi tombol dpad — otomatis dari ukuran btn */
+#dpad-up    { top: 0;    left: 50%; transform: translateX(-50%); }
+#dpad-down  { bottom: 0; left: 50%; transform: translateX(-50%); }
+#dpad-left  { top: 50%;  left: 0;   transform: translateY(-50%); }
+#dpad-right { top: 50%;  right: 0;  transform: translateY(-50%); }
+
+/* === PROGRESS BAR (pojok kanan bawah) === */
+#progress-bar-wrap {
+  position: absolute;
+  bottom: max(10px, env(safe-area-inset-bottom));
+  right: max(10px, env(safe-area-inset-right));
+  width: clamp(80px, 20vw, 120px);
+}
+
+#progress-label {
+  font-size: clamp(8px, 2vw, 10px);
+}
+
+/* === OVERLAY BOXES === */
+.overlay-box {
+  padding: clamp(16px, 4vw, 28px) clamp(18px, 5vw, 32px);
+  width: min(90vw, 340px);
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.overlay-title {
+  font-size: clamp(18px, 5vw, 26px);
+  margin-bottom: clamp(10px, 2.5vh, 16px);
+}
+
+.overlay-score-row {
+  font-size: clamp(11px, 3vw, 13px);
+  padding: clamp(5px, 1.5vh, 8px) 0;
+}
+
+.ov-btn {
+  padding: clamp(10px, 2.5vw, 13px) clamp(14px, 3.5vw, 20px);
+  font-size: clamp(11px, 3vw, 14px);
+}
+
+.stars-row {
+  font-size: clamp(24px, 7vw, 36px);
+  letter-spacing: clamp(4px, 2vw, 8px);
+}
+
+.overlay-btns {
+  gap: clamp(5px, 1.5vw, 8px);
+  margin-top: clamp(10px, 3vh, 18px);
+}
+
+/* === TOAST === */
+#toast {
+  bottom: max(70px, calc(env(safe-area-inset-bottom) + 60px));
+  font-size: clamp(11px, 3vw, 13px);
+  padding: 8px clamp(14px, 4vw, 22px);
+  max-width: 85vw;
+}
+
+/* === ACHIEVEMENT POPUP === */
+#ach-popup {
+  top: max(50px, calc(env(safe-area-inset-top) + 40px));
+  max-width: min(290px, 85vw);
+  font-size: clamp(10px, 2.8vw, 13px);
+}
+
+/* === PORTRAIT MODE: izinkan main portrait (hapus/ubah overlay) === */
+/* Uncomment baris di bawah jika ingin SUPPORT portrait juga: */
+/*
+#portrait-overlay {
+  display: none !important;
+}
+*/
+
+/* === PORTRAIT: layout vertikal khusus === */
+@media (orientation: portrait) {
+  /* Menu tetap fit di portrait */
+  #screen-menu {
+    justify-content: flex-start;
+    padding-top: max(20px, env(safe-area-inset-top, 20px));
+    overflow-y: auto;
+  }
+
+  .menu-box {
+    width: 88vw;
+    max-width: 380px;
+  }
+
+  /* Game: dpad lebih kecil di portrait */
+  #dpad {
+    width: clamp(100px, 32vw, 140px);
+    height: clamp(100px, 32vw, 140px);
+  }
+
+  .dpad-btn {
+    width: clamp(32px, 10vw, 45px);
+    height: clamp(32px, 10vw, 45px);
+  }
+}
+
+/* === LANDSCAPE MODE === */
+@media (orientation: landscape) {
+  #screen-menu {
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: clamp(16px, 4vw, 40px);
+  }
+
+  .menu-logo {
+    margin-bottom: 0;
+    text-align: center;
+  }
+
+  .menu-box {
+    width: clamp(220px, 45vw, 340px);
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+}
+
+/* === LAYAR SANGAT KECIL (< 360px lebar) === */
+@media (max-width: 360px) {
+  .menu-btn {
+    padding: 8px 10px;
+    font-size: 11px;
+  }
+
+  .diff-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+  }
+
+  .diff-card {
+    padding: 10px 6px;
+    font-size: 10px;
+  }
+}
+
+/* === LAYAR SANGAT PENDEK (< 500px tinggi) === */
+@media (max-height: 500px) {
+  #hud {
+    height: 32px;
+    padding: 2px 8px;
+  }
+
+  .hud-val { font-size: 11px; }
+  .hud-label { font-size: 6px; }
+
+  #dpad {
+    width: 110px;
+    height: 110px;
+    bottom: 6px;
+  }
+
+  .dpad-btn {
+    width: 36px;
+    height: 36px;
+    font-size: 15px;
+  }
+
+  .overlay-box {
+    padding: 12px 16px;
+  }
+
+  .overlay-title {
+    font-size: 16px;
+    margin-bottom: 8px;
+  }
+}
+
+/* === SCROLLBAR HALUS DI SEMUA PANEL === */
+.screen-box::-webkit-scrollbar,
+#screen-menu::-webkit-scrollbar {
+  width: 3px;
+}
+
+.screen-box::-webkit-scrollbar-thumb,
+#screen-menu::-webkit-scrollbar-thumb {
+  background: var(--primary);
+  border-radius: 3px;
+}
+
+</style>
 </style>
 </head>
 <body>
@@ -2291,6 +2716,174 @@ function boot() {
 }
 
 boot();
+
+<!-- =========================================================
+  PASTE INI SEBELUM </script> PENUTUP DI BAGIAN BAWAH index.html
+  (setelah semua kode game, sebelum tag </script> terakhir)
+========================================================= -->
+<script id="PASTE_INTO_SCRIPT_TAG">
+
+/* ============================================================
+   RESPONSIVE FIX SCRIPT — WebView / Mobile App
+   Tempel ini di paling bawah, sebelum tag </script> penutup
+   ============================================================ */
+
+(function() {
+  'use strict';
+
+  /* -----------------------------------------------------------
+     1. FIX CANVAS SIZE — otomatis fit area yang tersedia
+     ----------------------------------------------------------- */
+  function resizeGameCanvas() {
+    const container = document.getElementById('game-container');
+    const canvas = document.getElementById('game-canvas');
+    if (!container || !canvas) return;
+
+    const containerW = container.clientWidth;
+    const containerH = container.clientHeight;
+
+    if (containerW <= 0 || containerH <= 0) return;
+
+    // Hitung skala terbesar yang masih fit (aspect ratio dipertahankan)
+    // Canvas internal game biasanya 400x300 atau sesuai CELL_SIZE * GRID
+    // Ambil ukuran internal dari canvas attribute
+    const internalW = canvas.width  || 400;
+    const internalH = canvas.height || 300;
+
+    const scaleX = containerW / internalW;
+    const scaleY = containerH / internalH;
+    const scale  = Math.min(scaleX, scaleY, 1); // max 1x supaya tidak blur
+
+    // Jika canvas dirender dengan width/height attribute,
+    // set style size saja (tidak ubah internal resolution)
+    canvas.style.width  = Math.floor(internalW * scale) + 'px';
+    canvas.style.height = Math.floor(internalH * scale) + 'px';
+  }
+
+  /* -----------------------------------------------------------
+     2. FIX PORTRAIT OVERLAY — izinkan bermain di portrait
+     Hapus/comment fungsi ini jika mau tetap landscape only
+     ----------------------------------------------------------- */
+  function allowPortraitPlay() {
+    const overlay = document.getElementById('portrait-overlay');
+    if (!overlay) return;
+
+    // Sembunyikan overlay portrait agar bisa main di semua orientasi
+    // Comment 2 baris di bawah jika mau tetap paksa landscape
+    overlay.style.display = 'none';
+    overlay.classList.remove('visible');
+  }
+
+  /* -----------------------------------------------------------
+     3. FIX SCREEN-BOX MAX HEIGHT — pakai dvh jika tersedia
+     ----------------------------------------------------------- */
+  function fixScreenBoxHeight() {
+    const boxes = document.querySelectorAll('.screen-box');
+    const vh = window.innerHeight;
+    boxes.forEach(box => {
+      box.style.maxHeight = (vh - 24) + 'px';
+    });
+
+    // Fix menu juga
+    const menu = document.getElementById('screen-menu');
+    if (menu) {
+      menu.style.maxHeight = vh + 'px';
+    }
+  }
+
+  /* -----------------------------------------------------------
+     4. FIX DPAD POSITION — pastikan tidak keluar layar
+     ----------------------------------------------------------- */
+  function fixDpad() {
+    const dpad = document.getElementById('dpad');
+    if (!dpad) return;
+
+    const W = window.innerWidth;
+    const H = window.innerHeight;
+    const dpadW = dpad.offsetWidth  || 130;
+    const dpadH = dpad.offsetHeight || 130;
+
+    // Pastikan dpad tidak keluar layar kanan/bawah
+    const maxLeft   = W - dpadW - 8;
+    const maxBottom = H - dpadH - 8;
+
+    const currentLeft   = parseInt(dpad.style.left   || '10');
+    const currentBottom = parseInt(dpad.style.bottom || '14');
+
+    if (currentLeft > maxLeft) {
+      dpad.style.left = Math.max(8, maxLeft) + 'px';
+    }
+    if (currentBottom > maxBottom) {
+      dpad.style.bottom = Math.max(8, maxBottom) + 'px';
+    }
+  }
+
+  /* -----------------------------------------------------------
+     5. FIX MENU LOGO — pastikan tidak overflow secara vertikal
+     ----------------------------------------------------------- */
+  function fitMenuToScreen() {
+    const screenMenu = document.getElementById('screen-menu');
+    if (!screenMenu || !screenMenu.classList.contains('active')) return;
+
+    const H = window.innerHeight;
+    // Jika semua konten lebih tinggi dari layar, enable scroll
+    screenMenu.style.overflowY = 'auto';
+    screenMenu.style.justifyContent = H < 500 ? 'flex-start' : '';
+  }
+
+  /* -----------------------------------------------------------
+     6. GABUNGKAN SEMUA — jalankan saat resize & orientasi berubah
+     ----------------------------------------------------------- */
+  function applyAllFixes() {
+    allowPortraitPlay();
+    fixScreenBoxHeight();
+    fixDpad();
+    fitMenuToScreen();
+    resizeGameCanvas();
+  }
+
+  // Jalankan setelah DOM siap
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', applyAllFixes);
+  } else {
+    applyAllFixes();
+  }
+
+  // Jalankan saat ukuran layar berubah (orientasi, keyboard virtual, dll)
+  window.addEventListener('resize', applyAllFixes);
+  window.addEventListener('orientationchange', function() {
+    // Tunggu sebentar agar browser selesai update dimensi
+    setTimeout(applyAllFixes, 300);
+  });
+
+  // Jalankan juga saat layar aktif (pindah screen)
+  // Intercept showScreen jika ada fungsinya
+  const _origShowScreen = window.showScreen;
+  if (typeof _origShowScreen === 'function') {
+    window.showScreen = function(id) {
+      _origShowScreen(id);
+      setTimeout(applyAllFixes, 50);
+    };
+  } else {
+    // Fallback: observe class changes pada .screen elements
+    const screens = document.querySelectorAll('.screen');
+    const observer = new MutationObserver(function(mutations) {
+      mutations.forEach(function(m) {
+        if (m.attributeName === 'class') {
+          setTimeout(applyAllFixes, 50);
+        }
+      });
+    });
+    screens.forEach(function(s) {
+      observer.observe(s, { attributes: true });
+    });
+  }
+
+  console.log('[ResponsiveFix] Applied successfully');
+
+})();
+
+</script>
 </script>
 </body>
 </html>
