@@ -2,1666 +2,828 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <title>RPG Adventure - Fantasy Realm</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover, orientation=landscape">
+  <title>STRIKER LEGENDS · MOBILE FIGHTING</title>
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body {
-      background: #0a0a12;
-      font-family: 'Inter', sans-serif;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      min-height: 100vh;
-      padding: 10px;
-      overflow-x: hidden;
-      touch-action: manipulation;
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
       user-select: none;
       -webkit-user-select: none;
     }
-    .game-container {
-      width: 1000px;
-      max-width: 100%;
-      background: linear-gradient(160deg, #0f0f1a 0%, #0a0818 100%);
-      border: 2px solid rgba(108, 63, 197, 0.5);
-      border-radius: 20px;
+    body {
+      background: #000;
+      width: 100vw;
+      height: 100vh;
       overflow: hidden;
-      box-shadow: 0 20px 60px rgba(0,0,0,0.8), 0 0 100px rgba(108,63,197,0.15);
-    }
-    .header {
-      background: linear-gradient(90deg, rgba(108,63,197,0.2) 0%, rgba(180,80,255,0.1) 100%);
-      border-bottom: 1px solid rgba(108,63,197,0.4);
-      padding: 10px 20px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      flex-wrap: wrap;
-      gap: 8px;
-    }
-    .logo {
-      font-family: 'Orbitron', monospace;
-      font-weight: 700;
-      font-size: 16px;
-      color: #c090ff;
-      letter-spacing: 2px;
-      text-shadow: 0 0 15px #6c3fc5;
-    }
-    .nav-menu {
-      display: flex;
-      gap: 4px;
-      flex-wrap: wrap;
-    }
-    .nav-btn {
-      background: transparent;
-      border: 1px solid rgba(108,63,197,0.3);
-      color: #b0a0d0;
-      padding: 6px 12px;
-      border-radius: 8px;
-      font-family: 'Orbitron', monospace;
-      font-size: 9px;
-      letter-spacing: 1px;
-      cursor: pointer;
-      transition: all 0.3s;
-    }
-    .nav-btn:hover, .nav-btn.active {
-      background: rgba(108,63,197,0.2);
-      border-color: #9060ff;
-      color: #fff;
-    }
-    .content-area {
-      min-height: 450px;
-    }
-    /* Game World */
-    .game-world {
-      position: relative;
-      width: 100%;
-      height: 500px;
-      background: #0b0b14;
-      overflow: hidden;
-    }
-    .game-world canvas {
-      display: block;
-      width: 100%;
-      height: 100%;
-    }
-    .game-hud-top {
-      position: absolute;
-      top: 10px;
-      left: 10px;
-      right: 10px;
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      pointer-events: none;
-      z-index: 10;
-      gap: 10px;
-    }
-    .hud-panel {
-      background: rgba(0,0,0,0.75);
-      border: 1px solid rgba(108,63,197,0.4);
-      border-radius: 10px;
-      padding: 8px 14px;
-      color: #fff;
-      font-family: 'Orbitron', monospace;
-      font-size: 10px;
-      backdrop-filter: blur(10px);
-      min-width: 120px;
-    }
-    .hp-bar-bg {
-      background: #333;
-      height: 8px;
-      border-radius: 4px;
-      margin-top: 4px;
-      overflow: hidden;
-    }
-    .hp-bar-fill {
-      height: 100%;
-      background: linear-gradient(90deg, #ff2244, #ff6644);
-      transition: width 0.3s;
-      border-radius: 4px;
-    }
-    .mp-bar-fill {
-      height: 100%;
-      background: linear-gradient(90deg, #2244ff, #6644ff);
-      transition: width 0.3s;
-      border-radius: 4px;
-    }
-    /* Joystick */
-    .joystick-container {
-      position: absolute;
-      bottom: 30px;
-      left: 30px;
-      width: 120px;
-      height: 120px;
-      z-index: 20;
-      pointer-events: all;
-    }
-    .joystick-base {
-      width: 100%;
-      height: 100%;
-      background: rgba(108,63,197,0.2);
-      border: 2px solid rgba(108,63,197,0.5);
-      border-radius: 50%;
-      position: relative;
-      touch-action: none;
-      box-shadow: 0 0 20px rgba(108,63,197,0.3);
-    }
-    .joystick-thumb {
-      width: 50px;
-      height: 50px;
-      background: radial-gradient(circle, #9060ff, #6c3fc5);
-      border-radius: 50%;
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      box-shadow: 0 0 15px rgba(108,63,197,0.6);
-      transition: none;
-      pointer-events: none;
-    }
-    /* Skill Buttons */
-    .skill-buttons {
-      position: absolute;
-      bottom: 30px;
-      right: 30px;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      z-index: 20;
-      pointer-events: all;
-    }
-    .skill-row {
-      display: flex;
-      gap: 8px;
-    }
-    .skill-btn {
-      width: 55px;
-      height: 55px;
-      border-radius: 14px;
-      border: 2px solid;
-      background: rgba(0,0,0,0.7);
-      color: #fff;
-      font-size: 22px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      position: relative;
-      transition: all 0.15s;
-      backdrop-filter: blur(5px);
+      position: fixed;
+      top: 0;
+      left: 0;
       touch-action: manipulation;
     }
-    .skill-btn:active {
-      transform: scale(0.9);
-    }
-    .skill-btn .cooldown {
+    canvas {
+      display: block;
       position: absolute;
-      inset: 0;
-      background: rgba(0,0,0,0.6);
-      border-radius: 12px;
-      display: flex;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+    }
+    #rotate-msg {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: #111;
+      color: white;
+      z-index: 9999;
+      justify-content: center;
       align-items: center;
-      justify-content: center;
-      font-size: 14px;
-      font-family: 'Orbitron', monospace;
-      color: #fff;
-    }
-    .skill-label {
-      position: absolute;
-      bottom: -18px;
-      font-size: 8px;
-      font-family: 'Orbitron', monospace;
-      color: #c090ff;
-      white-space: nowrap;
-    }
-    .attack-btn {
-      width: 65px;
-      height: 65px;
-      border-radius: 50%;
-      background: radial-gradient(circle, #ff6644, #cc2200);
-      border: 3px solid #ffaa00;
-      font-size: 28px;
-      box-shadow: 0 0 25px rgba(255,100,50,0.5);
-    }
-    .back-btn {
-      position: absolute;
-      top: 10px;
-      right: 10px;
-      z-index: 30;
-      pointer-events: all;
-      background: rgba(108,63,197,0.4);
-      border: 1px solid #9060ff;
-      color: #fff;
-      padding: 6px 14px;
-      border-radius: 8px;
-      cursor: pointer;
-      font-family: 'Orbitron', monospace;
-      font-size: 9px;
-      backdrop-filter: blur(5px);
-    }
-    /* Home */
-    .home-page {
-      padding: 20px;
+      flex-direction: column;
+      font-family: Arial, sans-serif;
       text-align: center;
     }
-    .character-select {
+    #rotate-msg.show {
       display: flex;
-      gap: 16px;
-      justify-content: center;
-      flex-wrap: wrap;
-      margin: 20px 0;
     }
-    .char-card {
-      background: rgba(20,10,40,0.8);
-      border: 2px solid rgba(108,63,197,0.3);
-      border-radius: 16px;
-      padding: 16px;
-      width: 180px;
-      cursor: pointer;
-      transition: all 0.3s;
+    #rotate-msg .icon {
+      font-size: 60px;
+      margin-bottom: 20px;
     }
-    .char-card:hover {
-      border-color: #9060ff;
-      transform: translateY(-3px);
+    #rotate-msg .text {
+      font-size: 24px;
+      font-weight: bold;
     }
-    .char-card.selected {
-      border-color: #b040ff;
-      background: rgba(108,63,197,0.2);
-      box-shadow: 0 0 30px rgba(108,63,197,0.5);
-    }
-    .char-avatar {
-      width: 70px;
-      height: 70px;
-      margin: 0 auto 10px;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 35px;
-    }
-    .char-name {
-      font-family: 'Orbitron', monospace;
-      color: #c090ff;
-      font-size: 13px;
-    }
-    .play-btn {
-      background: linear-gradient(135deg, #6c3fc5, #b040ff);
-      border: none;
-      color: #fff;
-      padding: 14px 40px;
-      border-radius: 12px;
-      font-family: 'Orbitron', monospace;
-      font-size: 14px;
-      font-weight: 700;
-      letter-spacing: 2px;
-      cursor: pointer;
-      transition: all 0.3s;
-      box-shadow: 0 0 30px rgba(108,63,197,0.5);
-    }
-    .play-btn:disabled {
-      opacity: 0.3;
-      cursor: not-allowed;
-    }
-    /* Items */
-    .items-page {
-      padding: 16px;
-    }
-    .items-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-      gap: 10px;
-    }
-    .item-slot {
-      background: rgba(20,10,40,0.6);
-      border: 1px solid rgba(108,63,197,0.3);
-      border-radius: 10px;
-      padding: 10px;
-      text-align: center;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-    .item-slot:hover {
-      border-color: #9060ff;
-      background: rgba(108,63,197,0.2);
-    }
-    .item-icon {
-      font-size: 28px;
-    }
-    /* Info */
-    .info-page {
-      padding: 16px;
-      color: #c090ff;
-      max-height: 450px;
-      overflow-y: auto;
-    }
-    .info-section {
-      background: rgba(20,10,40,0.6);
-      border: 1px solid rgba(108,63,197,0.3);
-      border-radius: 10px;
-      padding: 12px;
-      margin-bottom: 12px;
-    }
-    .info-section h3 {
-      font-family: 'Orbitron', monospace;
-      font-size: 11px;
-      color: #b040ff;
-      margin-bottom: 6px;
-    }
-    .info-section li {
-      font-size: 9px;
-      color: #8060aa;
-      line-height: 1.5;
-    }
-    .info-section li::before {
-      content: "◈ ";
-      color: #6c3fc5;
-    }
-    /* Language */
-    .language-page {
-      padding: 20px;
-      text-align: center;
-    }
-    .lang-btn {
-      background: rgba(20,10,40,0.6);
-      border: 2px solid rgba(108,63,197,0.3);
-      color: #c090ff;
-      padding: 10px 20px;
-      border-radius: 10px;
-      font-family: 'Orbitron', monospace;
-      font-size: 10px;
-      cursor: pointer;
-      margin: 4px;
-      transition: all 0.3s;
-    }
-    .lang-btn.active {
-      border-color: #b040ff;
-      background: rgba(108,63,197,0.2);
-      box-shadow: 0 0 20px rgba(108,63,197,0.4);
-    }
-    /* About */
-    .about-page {
-      padding: 20px;
-      text-align: center;
-      color: #c090ff;
-    }
-    ::-webkit-scrollbar { width: 4px; }
-    ::-webkit-scrollbar-track { background: #0a0a12; }
-    ::-webkit-scrollbar-thumb { background: #4a2090; border-radius: 2px; }
-    @media (max-width: 600px) {
-      .joystick-container { width: 100px; height: 100px; bottom: 20px; left: 20px; }
-      .joystick-thumb { width: 40px; height: 40px; }
-      .skill-btn { width: 45px; height: 45px; font-size: 18px; }
-      .attack-btn { width: 55px; height: 55px; font-size: 24px; }
-      .skill-buttons { bottom: 20px; right: 20px; gap: 6px; }
-      .char-card { width: 140px; padding: 12px; }
+    #rotate-msg .sub {
+      font-size: 16px;
+      color: #aaa;
+      margin-top: 10px;
     }
   </style>
-  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
 </head>
 <body>
-<div id="root"></div>
+  <div id="rotate-msg">
+    <div class="icon">📱</div>
+    <div class="text">Please Rotate Your Device</div>
+    <div class="sub">Landscape Mode Only</div>
+  </div>
+  <canvas id="game"></canvas>
+  <script>
+    (function() {
+      const canvas = document.getElementById('game');
+      const ctx = canvas.getContext('2d');
+      const rotateMsg = document.getElementById('rotate-msg');
 
-<script src="https://unpkg.com/react@18/umd/react.development.js"></script>
-<script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
-<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-
-<script type="text/babel">
-const { useState, useEffect, useRef, useCallback } = React;
-
-// ============================================================
-// ENHANCED ANIMATION SYSTEM
-// ============================================================
-const ANIM_STATES = {
-  idle_down:   { frames: 8, fps: 6,  loop: true },
-  idle_up:     { frames: 8, fps: 6,  loop: true },
-  idle_left:   { frames: 8, fps: 6,  loop: true },
-  idle_right:  { frames: 8, fps: 6,  loop: true },
-  walk_down:   { frames: 8, fps: 10, loop: true },
-  walk_up:     { frames: 8, fps: 10, loop: true },
-  walk_left:   { frames: 8, fps: 10, loop: true },
-  walk_right:  { frames: 8, fps: 10, loop: true },
-  run_down:    { frames: 8, fps: 14, loop: true },
-  run_up:      { frames: 8, fps: 14, loop: true },
-  run_left:    { frames: 8, fps: 14, loop: true },
-  run_right:   { frames: 8, fps: 14, loop: true },
-  attack1:     { frames: 8, fps: 14, loop: false },
-  attack2:     { frames: 8, fps: 14, loop: false },
-  skill1:      { frames: 10, fps: 14, loop: false },
-  skill2:      { frames: 10, fps: 14, loop: false },
-  skill3:      { frames: 12, fps: 14, loop: false },
-  hurt:        { frames: 4, fps: 10, loop: false },
-  death:       { frames: 10, fps: 8,  loop: false },
-  victory:     { frames: 8, fps: 8,  loop: true },
-};
-
-const SKILLS = [
-  { id: "skill1", name: "Slash", icon: "⚔️", color: "#ff6644", cooldown: 2000, damage: 1.5, mp: 15, desc: "Powerful sword slash" },
-  { id: "skill2", name: "Blast", icon: "💥", color: "#ff8800", cooldown: 4000, damage: 2.5, mp: 30, desc: "Energy explosion" },
-  { id: "skill3", name: "Storm", icon: "🌪️", color: "#00d4ff", cooldown: 6000, damage: 4.0, mp: 50, desc: "Elemental storm" },
-];
-
-const CHARACTERS = [
-  {
-    id: "warrior", name: "Aldric", className: "Warrior", icon: "⚔️",
-    color: "#ff6644", colorDark: "#cc2200", hairColor: "#3a1a0a",
-    stats: { hp: 200, mp: 80, atk: 35, def: 25, spd: 15 },
-    desc: "A brave knight with heavy armor and powerful sword attacks.",
-    skinTone: "#f5c5a0",
-  },
-  {
-    id: "mage", name: "Lyra", className: "Mage", icon: "🔮",
-    color: "#8844ff", colorDark: "#4400aa", hairColor: "#e8d0ff",
-    stats: { hp: 120, mp: 200, atk: 55, def: 10, spd: 20 },
-    desc: "A wise sorceress wielding devastating elemental magic.",
-    skinTone: "#fce4d6",
-  },
-  {
-    id: "archer", name: "Kael", className: "Archer", icon: "🏹",
-    color: "#22aa44", colorDark: "#115522", hairColor: "#2a5a1a",
-    stats: { hp: 150, mp: 100, atk: 40, def: 15, spd: 30 },
-    desc: "An agile hunter with deadly precision and swift movements.",
-    skinTone: "#e8c8a0",
-  },
-  {
-    id: "assassin", name: "Shade", className: "Assassin", icon: "🗡️",
-    color: "#cc22cc", colorDark: "#660066", hairColor: "#1a1a2a",
-    stats: { hp: 110, mp: 120, atk: 60, def: 8, spd: 35 },
-    desc: "A shadowy figure striking from darkness with critical hits.",
-    skinTone: "#d4c0b0",
-  },
-];
-
-const ENEMIES = [
-  { id: "goblin", name: "Goblin", color: "#4a9a3a", size: 26, hp: 30, atk: 8, xp: 15 },
-  { id: "slime", name: "Slime", color: "#22cc66", size: 22, hp: 20, atk: 5, xp: 10 },
-  { id: "bat", name: "Bat", color: "#5a3080", size: 20, hp: 15, atk: 6, xp: 12 },
-  { id: "orc", name: "Orc", color: "#8a4a20", size: 36, hp: 60, atk: 18, xp: 30 },
-  { id: "skeleton", name: "Skeleton", color: "#d4c8a0", size: 30, hp: 40, atk: 14, xp: 22 },
-  { id: "wolf", name: "Wolf", color: "#6a6a6a", size: 28, hp: 35, atk: 16, xp: 20 },
-];
-
-const ITEMS = [
-  { id: "sword", icon: "⚔️", name: "Iron Sword", desc: "ATK +10", rarity: "common", color: "#aaa" },
-  { id: "shield", icon: "🛡️", name: "Oak Shield", desc: "DEF +8", rarity: "common", color: "#aa8c5a" },
-  { id: "potion", icon: "🧪", name: "HP Potion", desc: "+50 HP", rarity: "common", color: "#ff4444" },
-  { id: "mana", icon: "💎", name: "MP Crystal", desc: "+50 MP", rarity: "common", color: "#4444ff" },
-  { id: "ring", icon: "💍", name: "Power Ring", desc: "ATK +15", rarity: "rare", color: "#00d4ff" },
-  { id: "amulet", icon: "📿", name: "Guard Amulet", desc: "DEF +20", rarity: "rare", color: "#ffd700" },
-  { id: "staff", icon: "🔮", name: "Crystal Staff", desc: "MATK +25", rarity: "rare", color: "#b040ff" },
-  { id: "dagger", icon: "🗡️", name: "Shadow Dagger", desc: "ATK +22", rarity: "epic", color: "#ff00ff" },
-  { id: "armor", icon: "🦺", name: "Chainmail", desc: "DEF +15", rarity: "uncommon", color: "#888" },
-  { id: "boots", icon: "👢", name: "Swift Boots", desc: "SPD +12", rarity: "uncommon", color: "#6a4a2a" },
-  { id: "scroll", icon: "📜", name: "Skill Scroll", desc: "New Skill", rarity: "epic", color: "#ff8800" },
-  { id: "orb", icon: "🔵", name: "Mana Orb", desc: "MP +100", rarity: "epic", color: "#0088ff" },
-];
-
-const LANGUAGES = {
-  en: { name: "English", flag: "🇬🇧" },
-  id: { name: "Bahasa Indonesia", flag: "🇮🇩" },
-  ja: { name: "日本語", flag: "🇯🇵" },
-};
-
-const T = {
-  en: {
-    home: "Home", items: "Items", info: "Info", language: "Lang", about: "About",
-    play: "▶ PLAY", select: "Select Your Hero", choose: "Choose a character to begin",
-    back: "← Back", inv: "🎒 Inventory", animInfo: "📋 Animation System",
-    animDesc: "Frame-based animation state machine with procedural pixel art, particle FX, and smooth blending.",
-    states: "Animation States", skills: "Skills", enemies: "Enemies", bosses: "Bosses",
-    aboutTitle: "RPG Adventure", version: "v1.0.0",
-    engine: "React + Canvas 2D | Animation State Machine | Particle FX | Procedural Pixel Art",
-    victory: "VICTORY!", gameOver: "GAME OVER", score: "Score",
-    level: "Lv.", retry: "RETURN TO MENU",
-  },
-  id: {
-    home: "Beranda", items: "Item", info: "Info", language: "Bhs", about: "Tentang",
-    play: "▶ MAIN", select: "Pilih Karakter", choose: "Pilih karakter untuk memulai",
-    back: "← Kembali", inv: "🎒 Inventaris", animInfo: "📋 Sistem Animasi",
-    animDesc: "State machine animasi berbasis frame dengan pixel art prosedural, efek partikel, dan blending halus.",
-    states: "Status Animasi", skills: "Skill", enemies: "Musuh", bosses: "Boss",
-    aboutTitle: "RPG Adventure", version: "v1.0.0",
-    engine: "React + Canvas 2D | Animation State Machine | Particle FX | Pixel Art Prosedural",
-    victory: "MENANG!", gameOver: "GAME OVER", score: "Skor",
-    level: "Lv.", retry: "KEMBALI KE MENU",
-  },
-};
-
-// ============================================================
-// ENHANCED PIXEL CHARACTER RENDERER
-// ============================================================
-function drawCharacter(ctx, x, y, scale, dir, frame, state, char) {
-  ctx.save();
-  ctx.translate(x, y);
-  ctx.scale(scale, scale);
-
-  const s = state;
-  const f = frame;
-  const skin = char.skinTone || "#f5c5a0";
-  const hair = char.hairColor || "#4a2c0a";
-  const armor = s.includes("hurt") ? "#ff4444" : s === "death" ? "#555" : s === "victory" ? "#ffd700" : char.color;
-  const armorDark = char.colorDark || "#882200";
-  const isMoving = s.includes("walk") || s.includes("run");
-  const isAttacking = s.includes("attack");
-  const isSkill = s.includes("skill");
-  const speed = s.includes("run") ? 1.5 : 1;
-
-  // Body bob animation
-  const bob = Math.sin(f * 0.7 * speed) * (isMoving ? 3 : 0.5);
-  const armSwing = isMoving ? Math.cos(f * 0.7 * speed) * 6 : 0;
-  const legSwing = isMoving ? Math.sin(f * 0.7 * speed) * 5 : 0;
-  const attackPhase = isAttacking ? Math.sin(f * 0.5) * 8 : 0;
-  const skillPhase = isSkill ? Math.sin(f * 0.4) * 6 : 0;
-
-  // Shadow
-  ctx.save();
-  ctx.fillStyle = "rgba(0,0,0,0.3)";
-  ctx.beginPath();
-  ctx.ellipse(0, 18, 10, 3, 0, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.restore();
-
-  ctx.save();
-  ctx.translate(0, bob);
-
-  // --- CAPE / BACK ITEMS ---
-  if (char.id === "mage" || char.id === "assassin") {
-    ctx.fillStyle = char.id === "mage" ? "#6622aa" : "#1a1a2a";
-    ctx.beginPath();
-    const capeWave = Math.sin(f * 0.3) * 3;
-    ctx.moveTo(-4, -2);
-    ctx.lineTo(-10 + capeWave, 14);
-    ctx.lineTo(4, 8);
-    ctx.lineTo(10 + capeWave, 14);
-    ctx.lineTo(4, -2);
-    ctx.closePath();
-    ctx.fill();
-  }
-
-  // --- LEGS ---
-  // Left leg
-  ctx.fillStyle = armorDark;
-  ctx.fillRect(-6 - legSwing * 0.5, 8, 5, 10);
-  // Right leg
-  ctx.fillStyle = armor;
-  ctx.fillRect(1 + legSwing * 0.5, 8, 5, 10);
-  // Boots
-  ctx.fillStyle = "#2c1810";
-  ctx.fillRect(-7 - legSwing * 0.5, 16, 6, 4);
-  ctx.fillRect(0 + legSwing * 0.5, 16, 6, 4);
-
-  // --- BODY / ARMOR ---
-  const bodyGrad = ctx.createLinearGradient(0, 0, 0, 10);
-  bodyGrad.addColorStop(0, armor);
-  bodyGrad.addColorStop(1, armorDark);
-  ctx.fillStyle = bodyGrad;
-  
-  // Torso shape
-  ctx.beginPath();
-  ctx.roundRect(-7, -2, 14, 12, 3);
-  ctx.fill();
-  
-  // Armor details
-  ctx.strokeStyle = "rgba(255,255,255,0.2)";
-  ctx.lineWidth = 0.5;
-  ctx.beginPath();
-  ctx.moveTo(-3, 0);
-  ctx.lineTo(-3, 8);
-  ctx.stroke();
-  ctx.beginPath();
-  ctx.moveTo(3, 0);
-  ctx.lineTo(3, 8);
-  ctx.stroke();
-  
-  // Belt
-  ctx.fillStyle = "#8a6a3a";
-  ctx.fillRect(-7, 7, 14, 3);
-
-  // --- ARMS ---
-  // Left arm
-  ctx.fillStyle = armor;
-  ctx.save();
-  ctx.translate(-7, 0);
-  ctx.rotate(-0.3 - armSwing * 0.05 - attackPhase * 0.08);
-  ctx.fillRect(-2, 0, 5, 10);
-  // Hand
-  ctx.fillStyle = skin;
-  ctx.beginPath();
-  ctx.arc(0, 10, 3, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.restore();
-
-  // Right arm (weapon arm)
-  ctx.fillStyle = armor;
-  ctx.save();
-  ctx.translate(7, 0);
-  const rightArmRot = 0.3 + armSwing * 0.05 + attackPhase * 0.1 + skillPhase * 0.06;
-  ctx.rotate(rightArmRot);
-  ctx.fillRect(-3, 0, 5, 10);
-  ctx.fillStyle = skin;
-  ctx.beginPath();
-  ctx.arc(0, 10, 3, 0, Math.PI * 2);
-  ctx.fill();
-  
-  // Weapon
-  if (isAttacking || isSkill || s === "victory") {
-    ctx.fillStyle = "#c0c0c0";
-    ctx.shadowColor = "#fff";
-    ctx.shadowBlur = isSkill ? 10 : 3;
-    ctx.fillRect(0, 6, 3, 16);
-    // Blade tip
-    ctx.fillStyle = "#e0e0e0";
-    ctx.beginPath();
-    ctx.moveTo(0, 6);
-    ctx.lineTo(1.5, -2);
-    ctx.lineTo(3, 6);
-    ctx.closePath();
-    ctx.fill();
-    // Guard
-    ctx.fillStyle = "#f5a623";
-    ctx.fillRect(-3, 6, 9, 3);
-    ctx.shadowBlur = 0;
-  } else if (char.id === "mage") {
-    // Staff
-    ctx.fillStyle = "#8a5a2a";
-    ctx.fillRect(-1, -5, 3, 18);
-    ctx.fillStyle = "#b040ff";
-    ctx.shadowColor = "#b040ff";
-    ctx.shadowBlur = 8;
-    ctx.beginPath();
-    ctx.arc(0, -5, 5, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.shadowBlur = 0;
-  } else if (char.id === "archer") {
-    // Bow on back hint
-    ctx.fillStyle = "#6a4a2a";
-    ctx.fillRect(-6, -8, 2, 14);
-  }
-  ctx.restore();
-
-  // --- HEAD ---
-  // Neck
-  ctx.fillStyle = skin;
-  ctx.fillRect(-3, -6, 6, 4);
-  
-  // Head
-  ctx.beginPath();
-  ctx.arc(0, -10, 7, 0, Math.PI * 2);
-  ctx.fill();
-  
-  // Hair back
-  ctx.fillStyle = hair;
-  ctx.beginPath();
-  ctx.arc(0, -11, 7.5, Math.PI, 0);
-  ctx.fill();
-  ctx.fillRect(-7, -15, 14, 7);
-  
-  // Hair strands
-  ctx.fillStyle = hair;
-  if (char.id === "mage") {
-    // Long hair
-    ctx.fillRect(-7, -15, 3, 12);
-    ctx.fillRect(4, -15, 3, 12);
-  }
-  
-  // Eyes
-  const eyeY = s === "hurt" ? -9 : s === "death" ? -7 : -11;
-  ctx.fillStyle = "#fff";
-  ctx.fillRect(-5, eyeY, 4, 3);
-  ctx.fillRect(1, eyeY, 4, 3);
-  // Pupils
-  ctx.fillStyle = s === "death" ? "#888" : char.id === "assassin" ? "#ff0000" : char.id === "mage" ? "#6600ff" : "#222";
-  const lookDir = dir === "left" ? -1 : dir === "right" ? 1 : 0;
-  ctx.fillRect(-4 + lookDir, eyeY + 0.5, 2, 2);
-  ctx.fillRect(2 + lookDir, eyeY + 0.5, 2, 2);
-  
-  // Eyebrows
-  ctx.fillStyle = hair;
-  ctx.fillRect(-5, eyeY - 2, 4, 1.5);
-  ctx.fillRect(1, eyeY - 2, 4, 1.5);
-  
-  // Mouth
-  ctx.fillStyle = "#c08070";
-  if (s === "hurt") {
-    ctx.fillRect(-2, -5, 4, 2);
-  } else if (s === "victory") {
-    ctx.beginPath();
-    ctx.arc(0, -5, 2, 0, Math.PI);
-    ctx.fill();
-  } else {
-    ctx.fillRect(-2, -6, 4, 1.5);
-  }
-
-  ctx.restore(); // bob
-
-  // --- EFFECTS OVERLAY ---
-  if (isSkill) {
-    ctx.save();
-    const glowColor = char.id === "mage" ? "#b040ff" : char.id === "warrior" ? "#ff8800" : "#00d4ff";
-    ctx.shadowColor = glowColor;
-    ctx.shadowBlur = 20 + Math.sin(f * 0.5) * 10;
-    ctx.fillStyle = glowColor;
-    ctx.globalAlpha = 0.25 + Math.sin(f * 0.4) * 0.1;
-    ctx.beginPath();
-    ctx.arc(0, 4, 16, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.restore();
-  }
-  
-  if (s === "victory") {
-    // Sparkles
-    for (let i = 0; i < 6; i++) {
-      const angle = (f * 0.1 + i * 1.05);
-      const dist = 14 + Math.sin(f * 0.2 + i) * 4;
-      ctx.fillStyle = ["#ffd700", "#fff", "#ff8800", "#ffff00"][i % 4];
-      ctx.beginPath();
-      ctx.arc(Math.cos(angle) * dist, Math.sin(angle) * dist - 8, 2, 0, Math.PI * 2);
-      ctx.fill();
-    }
-  }
-
-  ctx.restore(); // main
-}
-
-// ============================================================
-// JOYSTICK COMPONENT
-// ============================================================
-function Joystick({ onMove }) {
-  const baseRef = useRef(null);
-  const thumbRef = useRef(null);
-  const activeRef = useRef(false);
-  const baseRect = useRef(null);
-
-  const getPos = (e) => {
-    const touch = e.touches ? e.touches[0] : e;
-    return { x: touch.clientX, y: touch.clientY };
-  };
-
-  const handleStart = useCallback((e) => {
-    e.preventDefault();
-    activeRef.current = true;
-    baseRect.current = baseRef.current.getBoundingClientRect();
-    const pos = getPos(e);
-    updateThumb(pos);
-  }, [onMove]);
-
-  const handleMove = useCallback((e) => {
-    if (!activeRef.current) return;
-    e.preventDefault();
-    const pos = getPos(e);
-    updateThumb(pos);
-  }, [onMove]);
-
-  const handleEnd = useCallback((e) => {
-    e.preventDefault();
-    activeRef.current = false;
-    if (thumbRef.current) {
-      thumbRef.current.style.transform = "translate(-50%, -50%)";
-    }
-    onMove(0, 0);
-  }, [onMove]);
-
-  const updateThumb = (pos) => {
-    if (!baseRect.current || !thumbRef.current) return;
-    const cx = baseRect.current.left + baseRect.current.width / 2;
-    const cy = baseRect.current.top + baseRect.current.height / 2;
-    const maxR = baseRect.current.width / 2 - 25;
-    let dx = pos.x - cx;
-    let dy = pos.y - cy;
-    const dist = Math.hypot(dx, dy);
-    if (dist > maxR) {
-      dx = (dx / dist) * maxR;
-      dy = (dy / dist) * maxR;
-    }
-    thumbRef.current.style.transform = `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))`;
-    onMove(dx / maxR, dy / maxR);
-  };
-
-  return (
-    <div
-      className="joystick-container"
-      ref={baseRef}
-      onMouseDown={handleStart}
-      onMouseMove={handleMove}
-      onMouseUp={handleEnd}
-      onMouseLeave={handleEnd}
-      onTouchStart={handleStart}
-      onTouchMove={handleMove}
-      onTouchEnd={handleEnd}
-    >
-      <div className="joystick-base">
-        <div className="joystick-thumb" ref={thumbRef} />
-      </div>
-    </div>
-  );
-}
-
-// ============================================================
-// GAME WORLD
-// ============================================================
-function GameWorld({ character, onBack, t }) {
-  const canvasRef = useRef(null);
-  const playerRef = useRef({
-    x: 450, y: 250,
-    dir: "down",
-    state: "idle_down",
-    hp: character.stats.hp,
-    maxHp: character.stats.hp,
-    mp: character.stats.mp,
-    maxMp: character.stats.mp,
-    level: 1,
-    xp: 0,
-    nextXp: 50,
-  });
-  const frameRef = useRef(0);
-  const animRef = useRef(null);
-  const enemiesRef = useRef([]);
-  const particlesRef = useRef([]);
-  const damageNumbersRef = useRef([]);
-  const skillCooldownsRef = useRef({});
-  const [hud, setHud] = useState({
-    hp: character.stats.hp,
-    maxHp: character.stats.hp,
-    mp: character.stats.mp,
-    maxMp: character.stats.mp,
-    level: 1,
-    xp: 0,
-    nextXp: 50,
-    score: 0,
-    state: "idle_down",
-  });
-  const [cooldowns, setCooldowns] = useState({});
-  const [gameOver, setGameOver] = useState(false);
-  const [victory, setVictory] = useState(false);
-
-  // Initialize enemies
-  useEffect(() => {
-    enemiesRef.current = [
-      { id: 1, type: "goblin", x: 200, y: 150, hp: 30, maxHp: 30 },
-      { id: 2, type: "slime", x: 600, y: 200, hp: 20, maxHp: 20 },
-      { id: 3, type: "bat", x: 700, y: 80, hp: 15, maxHp: 15 },
-      { id: 4, type: "orc", x: 350, y: 320, hp: 60, maxHp: 60 },
-      { id: 5, type: "skeleton", x: 750, y: 300, hp: 40, maxHp: 40 },
-      { id: 6, type: "wolf", x: 500, y: 100, hp: 35, maxHp: 35 },
-      { id: 7, type: "goblin", x: 100, y: 300, hp: 30, maxHp: 30 },
-      { id: 8, type: "slime", x: 800, y: 150, hp: 20, maxHp: 20 },
-    ];
-  }, []);
-
-  const spawnParticles = useCallback((x, y, color, count = 15, type = "circle") => {
-    for (let i = 0; i < count; i++) {
-      const angle = Math.random() * Math.PI * 2;
-      const speed = 1 + Math.random() * 4;
-      particlesRef.current.push({
-        x, y,
-        vx: Math.cos(angle) * speed,
-        vy: Math.sin(angle) * speed - 1,
-        life: 1,
-        decay: 0.015 + Math.random() * 0.03,
-        color,
-        size: 1.5 + Math.random() * 3,
-        type,
-      });
-    }
-  }, []);
-
-  const spawnDamage = useCallback((x, y, value, isCrit = false) => {
-    damageNumbersRef.current.push({
-      x, y,
-      value,
-      life: 1,
-      decay: 0.02,
-      isCrit,
-      id: Date.now() + Math.random(),
-    });
-  }, []);
-
-  const useSkill = useCallback((skillId) => {
-    const player = playerRef.current;
-    const skill = SKILLS.find(s => s.id === skillId);
-    if (!skill) return;
-    if (player.mp < skill.mp) return;
-    if (skillCooldownsRef.current[skillId] > Date.now()) return;
-
-    player.mp -= skill.mp;
-    skillCooldownsRef.current[skillId] = Date.now() + skill.cooldown;
-    player.state = skillId;
-    setCooldowns(prev => ({ ...prev, [skillId]: skill.cooldown }));
-
-    // Animate cooldown
-    const interval = setInterval(() => {
-      const remaining = skillCooldownsRef.current[skillId] - Date.now();
-      if (remaining <= 0) {
-        clearInterval(interval);
-        setCooldowns(prev => ({ ...prev, [skillId]: 0 }));
-      } else {
-        setCooldowns(prev => ({ ...prev, [skillId]: remaining }));
-      }
-    }, 100);
-
-    // Skill effect
-    spawnParticles(player.x, player.y, skill.color, 30, "spark");
-    
-    // Damage enemies in range
-    const range = skill.id === "skill3" ? 150 : 80;
-    enemiesRef.current.forEach(enemy => {
-      const edata = ENEMIES.find(e => e.id === enemy.type);
-      if (!edata) return;
-      const dist = Math.hypot(player.x - enemy.x, player.y - enemy.y);
-      if (dist < range) {
-        const dmg = Math.floor(character.stats.atk * skill.damage);
-        enemy.hp -= dmg;
-        spawnParticles(enemy.x, enemy.y, skill.color, 20, "circle");
-        spawnDamage(enemy.x, enemy.y, dmg);
-        if (enemy.hp <= 0) {
-          player.xp += edata.xp;
-          setHud(prev => {
-            const newXp = prev.xp + edata.xp;
-            if (newXp >= prev.nextXp) {
-              player.level++;
-              player.maxHp += 20;
-              player.hp = player.maxHp;
-              player.maxMp += 15;
-              player.mp = player.maxMp;
-              return {
-                ...prev,
-                xp: newXp - prev.nextXp,
-                nextXp: Math.floor(prev.nextXp * 1.5),
-                level: player.level,
-                hp: player.hp,
-                maxHp: player.maxHp,
-                mp: player.mp,
-                maxMp: player.maxMp,
-              };
-            }
-            return { ...prev, xp: newXp };
-          });
-          enemy.hp = enemy.maxHp;
-          enemy.x = Math.random() * 800 + 50;
-          enemy.y = Math.random() * 350 + 50;
-          spawnParticles(enemy.x, enemy.y, "#ffd700", 25, "circle");
-          setHud(prev => ({ ...prev, score: prev.score + edata.xp }));
-        }
-      }
-    });
-
-    setTimeout(() => {
-      if (player.state === skillId) {
-        player.state = `idle_${player.dir}`;
-      }
-    }, 600);
-  }, [character, spawnParticles, spawnDamage]);
-
-  const attack = useCallback(() => {
-    const player = playerRef.current;
-    if (player.state.includes("attack") || player.state.includes("skill")) return;
-    player.state = Math.random() > 0.5 ? "attack1" : "attack2";
-    
-    const range = 40;
-    enemiesRef.current.forEach(enemy => {
-      const edata = ENEMIES.find(e => e.id === enemy.type);
-      if (!edata) return;
-      const dist = Math.hypot(player.x - enemy.x, player.y - enemy.y);
-      if (dist < range + edata.size) {
-        const isCrit = Math.random() < 0.15;
-        const dmg = Math.floor(character.stats.atk * (isCrit ? 2 : 1));
-        enemy.hp -= dmg;
-        spawnParticles(enemy.x, enemy.y, edata.color, 12, "circle");
-        spawnDamage(enemy.x, enemy.y, dmg, isCrit);
-        if (enemy.hp <= 0) {
-          player.xp += edata.xp;
-          setHud(prev => {
-            const newXp = prev.xp + edata.xp;
-            if (newXp >= prev.nextXp) {
-              player.level++;
-              player.maxHp += 20;
-              player.hp = player.maxHp;
-              player.maxMp += 15;
-              player.mp = player.maxMp;
-              spawnParticles(player.x, player.y, "#ffd700", 40, "spark");
-              return {
-                ...prev,
-                xp: newXp - prev.nextXp,
-                nextXp: Math.floor(prev.nextXp * 1.5),
-                level: player.level,
-                hp: player.hp,
-                maxHp: player.maxHp,
-                mp: player.mp,
-                maxMp: player.maxMp,
-              };
-            }
-            return { ...prev, xp: newXp };
-          });
-          enemy.hp = enemy.maxHp;
-          enemy.x = Math.random() * 800 + 50;
-          enemy.y = Math.random() * 350 + 50;
-          spawnParticles(enemy.x, enemy.y, "#ffd700", 25, "circle");
-          setHud(prev => ({ ...prev, score: prev.score + edata.xp }));
-        }
-      }
-    });
-
-    setTimeout(() => {
-      if (player.state.includes("attack")) {
-        player.state = `idle_${player.dir}`;
-      }
-    }, 450);
-  }, [character, spawnParticles, spawnDamage]);
-
-  // Joystick movement handler
-  const handleJoystickMove = useCallback((dx, dy) => {
-    const player = playerRef.current;
-    if (gameOver || victory) return;
-    const speed = 3;
-    player.x += dx * speed;
-    player.y += dy * speed;
-    player.x = Math.max(25, Math.min(875, player.x));
-    player.y = Math.max(25, Math.min(425, player.y));
-    
-    if (Math.abs(dx) > 0.1 || Math.abs(dy) > 0.1) {
-      if (Math.abs(dx) > Math.abs(dy)) player.dir = dx > 0 ? "right" : "left";
-      else player.dir = dy > 0 ? "down" : "up";
-      if (!player.state.includes("attack") && !player.state.includes("skill") && !player.state.includes("hurt")) {
-        player.state = `run_${player.dir}`;
-      }
-    } else {
-      if (!player.state.includes("attack") && !player.state.includes("skill") && !player.state.includes("hurt")) {
-        player.state = `idle_${player.dir}`;
-      }
-    }
-  }, [gameOver, victory]);
-
-  // Keyboard handler
-  useEffect(() => {
-    const keys = {};
-    const handleKeyDown = (e) => {
-      keys[e.key] = true;
-      if (e.key === " " || e.key === "Spacebar") {
-        e.preventDefault();
-        attack();
-      }
-      if (e.key === "1") useSkill("skill1");
-      if (e.key === "2") useSkill("skill2");
-      if (e.key === "3") useSkill("skill3");
-    };
-    const handleKeyUp = (e) => { keys[e.key] = false; };
-    window.addEventListener("keydown", handleKeyDown);
-    window.addEventListener("keyup", handleKeyUp);
-
-    const keyInterval = setInterval(() => {
-      const player = playerRef.current;
-      if (gameOver || victory) return;
-      if (player.state.includes("attack") || player.state.includes("skill") || player.state.includes("hurt")) return;
-      
-      let dx = 0, dy = 0;
-      if (keys["ArrowUp"] || keys["w"]) dy = -1;
-      if (keys["ArrowDown"] || keys["s"]) dy = 1;
-      if (keys["ArrowLeft"] || keys["a"]) dx = -1;
-      if (keys["ArrowRight"] || keys["d"]) dx = 1;
-      
-      if (dx !== 0 || dy !== 0) {
-        const speed = 3;
-        const len = Math.sqrt(dx*dx + dy*dy);
-        player.x += (dx/len) * speed;
-        player.y += (dy/len) * speed;
-        player.x = Math.max(25, Math.min(875, player.x));
-        player.y = Math.max(25, Math.min(425, player.y));
-        if (Math.abs(dx) > Math.abs(dy)) player.dir = dx > 0 ? "right" : "left";
-        else player.dir = dy > 0 ? "down" : "up";
-        player.state = `run_${player.dir}`;
-      } else {
-        player.state = `idle_${player.dir}`;
-      }
-    }, 16);
-
-    return () => {
-      window.removeEventListener("keydown", handleKeyDown);
-      window.removeEventListener("keyup", handleKeyUp);
-      clearInterval(keyInterval);
-    };
-  }, [attack, useSkill, gameOver, victory]);
-
-  // MP regen
-  useEffect(() => {
-    const regenInterval = setInterval(() => {
-      const player = playerRef.current;
-      if (player.mp < player.maxMp) {
-        player.mp = Math.min(player.maxMp, player.mp + 1);
-        setHud(prev => ({ ...prev, mp: player.mp }));
-      }
-    }, 500);
-    return () => clearInterval(regenInterval);
-  }, []);
-
-  // Main game loop
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext("2d");
-    const W = 900, H = 450;
-
-    const loop = () => {
-      ctx.clearRect(0, 0, W, H);
-      const player = playerRef.current;
-
-      // Background
-      const skyGrad = ctx.createLinearGradient(0, 0, 0, H);
-      skyGrad.addColorStop(0, "#1a2a4a");
-      skyGrad.addColorStop(0.4, "#2a3a5a");
-      skyGrad.addColorStop(0.7, "#2a4a3a");
-      skyGrad.addColorStop(1, "#1a3a1a");
-      ctx.fillStyle = skyGrad;
-      ctx.fillRect(0, 0, W, H);
-
-      // Stars
-      for (let i = 0; i < 30; i++) {
-        const sx = (i * 37 + 13) % W;
-        const sy = (i * 23 + 7) % (H * 0.4);
-        ctx.fillStyle = `rgba(255,255,255,${0.3 + Math.sin(frameRef.current * 0.02 + i) * 0.3})`;
-        ctx.fillRect(sx, sy, 1.5, 1.5);
+      // ==================== SCREEN MANAGEMENT ====================
+      function resizeCanvas() {
+        const w = window.innerWidth;
+        const h = window.innerHeight;
+        canvas.width = w;
+        canvas.height = h;
       }
 
-      // Mountains
-      ctx.fillStyle = "#1a2a3a";
-      ctx.beginPath();
-      ctx.moveTo(0, 350);
-      ctx.lineTo(100, 250);
-      ctx.lineTo(250, 320);
-      ctx.lineTo(400, 220);
-      ctx.lineTo(550, 300);
-      ctx.lineTo(700, 240);
-      ctx.lineTo(900, 310);
-      ctx.lineTo(900, 450);
-      ctx.lineTo(0, 450);
-      ctx.closePath();
-      ctx.fill();
-
-      // Ground
-      ctx.fillStyle = "#2a5a2a";
-      ctx.fillRect(0, 360, W, 90);
-      
-      // Grass details
-      ctx.fillStyle = "#3a7a3a";
-      for (let i = 0; i < W; i += 30) {
-        ctx.fillRect(i, 358, 15, 4);
-      }
-      
-      // Path
-      ctx.fillStyle = "#8a7a5a";
-      ctx.beginPath();
-      ctx.moveTo(0, 380);
-      ctx.quadraticCurveTo(W/2, 350, W, 370);
-      ctx.lineTo(W, 400);
-      ctx.quadraticCurveTo(W/2, 380, 0, 410);
-      ctx.closePath();
-      ctx.fill();
-
-      // Trees
-      [60, 180, 320, 480, 620, 780].forEach((tx, i) => {
-        const ty = 300 + Math.sin(i * 1.5) * 20;
-        const sway = Math.sin(frameRef.current * 0.02 + i) * 3;
-        ctx.save();
-        ctx.translate(sway, 0);
-        ctx.fillStyle = "#4a2a1a";
-        ctx.fillRect(tx - 5, ty, 10, 50);
-        // Canopy layers
-        ctx.fillStyle = "#1a5a1a";
-        ctx.beginPath();
-        ctx.moveTo(tx, ty - 30);
-        ctx.lineTo(tx - 25, ty + 5);
-        ctx.lineTo(tx + 25, ty + 5);
-        ctx.closePath();
-        ctx.fill();
-        ctx.fillStyle = "#2a7a2a";
-        ctx.beginPath();
-        ctx.moveTo(tx, ty - 20);
-        ctx.lineTo(tx - 18, ty + 2);
-        ctx.lineTo(tx + 18, ty + 2);
-        ctx.closePath();
-        ctx.fill();
-        ctx.restore();
-      });
-
-      // Bushes
-      [120, 400, 650, 820].forEach(bx => {
-        ctx.fillStyle = "#2a6a2a";
-        ctx.beginPath();
-        ctx.arc(bx, 355, 12, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.fillStyle = "#3a8a3a";
-        ctx.beginPath();
-        ctx.arc(bx + 6, 352, 8, 0, Math.PI * 2);
-        ctx.fill();
-      });
-
-      // Flowers
-      [90, 280, 520, 700].forEach(fx => {
-        ctx.fillStyle = ["#ff6688", "#ffaa44", "#ffdd88", "#ff88aa"][Math.floor(fx/100) % 4];
-        ctx.beginPath();
-        ctx.arc(fx, 358, 3, 0, Math.PI * 2);
-        ctx.fill();
-      });
-
-      // Enemy AI + Draw
-      enemiesRef.current.forEach(enemy => {
-        const edata = ENEMIES.find(e => e.id === enemy.type);
-        if (!edata) return;
-        
-        // AI Movement
-        const dist = Math.hypot(player.x - enemy.x, player.y - enemy.y);
-        if (dist < 250 && dist > edata.size) {
-          const angle = Math.atan2(player.y - enemy.y, player.x - enemy.x);
-          const speed = enemy.type === "bat" ? 1.5 : enemy.type === "wolf" ? 1.4 : 0.7;
-          enemy.x += Math.cos(angle) * speed;
-          enemy.y += Math.sin(angle) * speed;
-          enemy.x = Math.max(25, Math.min(875, enemy.x));
-          enemy.y = Math.max(25, Math.min(425, enemy.y));
-        }
-        
-        // Damage player on contact
-        if (dist < edata.size + 10 && frameRef.current % 45 === 0) {
-          player.hp -= edata.atk;
-          if (player.hp <= 0) {
-            player.hp = 0;
-            player.state = "death";
-          } else if (!player.state.includes("hurt")) {
-            player.state = "hurt";
-            setTimeout(() => {
-              if (player.state === "hurt") player.state = `idle_${player.dir}`;
-            }, 400);
-          }
-          spawnParticles(player.x, player.y, "#ff4444", 8, "circle");
-          spawnDamage(player.x, player.y, edata.atk);
-        }
-
-        // Draw enemy
-        const bob = Math.sin(frameRef.current * 0.04 + enemy.x) * 2;
-        ctx.fillStyle = "rgba(0,0,0,0.25)";
-        ctx.beginPath();
-        ctx.ellipse(enemy.x, enemy.y + edata.size/2, edata.size/2, 4, 0, 0, Math.PI * 2);
-        ctx.fill();
-        
-        ctx.fillStyle = edata.color;
-        ctx.shadowColor = edata.color;
-        ctx.shadowBlur = 6;
-        
-        if (enemy.type === "slime") {
-          ctx.beginPath();
-          ctx.arc(enemy.x, enemy.y + bob, edata.size/2, 0, Math.PI * 2);
-          ctx.fill();
-          ctx.fillStyle = "rgba(255,255,255,0.3)";
-          ctx.beginPath();
-          ctx.arc(enemy.x - 4, enemy.y - 4, 5, 0, Math.PI * 2);
-          ctx.fill();
-        } else if (enemy.type === "bat") {
-          const wingFlap = Math.sin(frameRef.current * 0.1 + enemy.x) * 8;
-          ctx.beginPath();
-          ctx.ellipse(enemy.x, enemy.y + bob, edata.size/3, edata.size/2, 0, 0, Math.PI * 2);
-          ctx.fill();
-          ctx.beginPath();
-          ctx.ellipse(enemy.x - 8, enemy.y - 4 + wingFlap, 10, 5, -0.3, 0, Math.PI * 2);
-          ctx.fill();
-          ctx.beginPath();
-          ctx.ellipse(enemy.x + 8, enemy.y - 4 - wingFlap, 10, 5, 0.3, 0, Math.PI * 2);
-          ctx.fill();
-          ctx.fillStyle = "#ff4444";
-          ctx.fillRect(enemy.x - 3, enemy.y - edata.size/2, 2, 3);
-          ctx.fillRect(enemy.x + 1, enemy.y - edata.size/2, 2, 3);
-        } else if (enemy.type === "wolf") {
-          ctx.fillStyle = edata.color;
-          ctx.beginPath();
-          ctx.ellipse(enemy.x, enemy.y + bob, edata.size/2, edata.size/3, 0, 0, Math.PI * 2);
-          ctx.fill();
-          ctx.beginPath();
-          ctx.arc(enemy.x - edata.size/3, enemy.y - edata.size/4 + bob, edata.size/4, 0, Math.PI * 2);
-          ctx.fill();
-          ctx.fillStyle = "#ff4444";
-          ctx.fillRect(enemy.x - edata.size/3 - 3, enemy.y - edata.size/3 + bob, 2, 2);
-          ctx.fillRect(enemy.x - edata.size/3 + 1, enemy.y - edata.size/3 + bob, 2, 2);
+      function checkOrientation() {
+        const isLandscape = window.innerWidth > window.innerHeight;
+        if (isLandscape) {
+          rotateMsg.classList.remove('show');
+          resizeCanvas();
         } else {
-          ctx.fillRect(enemy.x - edata.size/3, enemy.y - edata.size/2 + bob, edata.size*2/3, edata.size/2);
-          ctx.beginPath();
-          ctx.arc(enemy.x, enemy.y - edata.size/2 + bob, edata.size/3, 0, Math.PI * 2);
-          ctx.fill();
-          ctx.fillStyle = "#fff";
-          ctx.fillRect(enemy.x - 5, enemy.y - edata.size/2 - 2 + bob, 3, 3);
-          ctx.fillRect(enemy.x + 2, enemy.y - edata.size/2 - 2 + bob, 3, 3);
-          ctx.fillStyle = "#222";
-          ctx.fillRect(enemy.x - 4, enemy.y - edata.size/2 - 1 + bob, 2, 2);
-          ctx.fillRect(enemy.x + 3, enemy.y - edata.size/2 - 1 + bob, 2, 2);
+          rotateMsg.classList.add('show');
         }
-        ctx.shadowBlur = 0;
+      }
 
-        // HP bar
-        const hpPct = enemy.hp / enemy.maxHp;
-        ctx.fillStyle = "rgba(0,0,0,0.6)";
-        ctx.fillRect(enemy.x - 15, enemy.y - edata.size/2 - 14, 30, 4);
-        ctx.fillStyle = hpPct > 0.5 ? "#39ff14" : hpPct > 0.25 ? "#ffaa00" : "#ff2244";
-        ctx.fillRect(enemy.x - 15, enemy.y - edata.size/2 - 14, 30 * hpPct, 4);
+      window.addEventListener('resize', checkOrientation);
+      window.addEventListener('orientationchange', () => setTimeout(checkOrientation, 200));
+      checkOrientation();
+      resizeCanvas();
+
+      // ==================== AUDIO SYSTEM ====================
+      let audioCtx = null;
+      
+      function initAudio() {
+        if (audioCtx) return;
+        try {
+          audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        } catch(e) {}
+      }
+
+      function playSound(freq, type, duration, vol) {
+        if (!audioCtx) return;
+        try {
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          osc.type = type || 'square';
+          osc.frequency.value = freq || 440;
+          gain.gain.setValueAtTime(vol || 0.1, audioCtx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+          osc.connect(gain);
+          gain.connect(audioCtx.destination);
+          osc.start(audioCtx.currentTime);
+          osc.stop(audioCtx.currentTime + duration);
+        } catch(e) {}
+      }
+
+      function sfxSelect() { playSound(800, 'sine', 0.1, 0.15); }
+      function sfxMove() { playSound(500, 'sine', 0.05, 0.08); }
+      function sfxPunch() { playSound(120, 'square', 0.1, 0.15); }
+      function sfxKick() { playSound(60, 'sawtooth', 0.12, 0.18); }
+      function sfxSpecial() { playSound(350, 'sawtooth', 0.2, 0.25); }
+      function sfxUltimate() { playSound(40, 'sawtooth', 0.4, 0.3); playSound(600, 'square', 0.2, 0.2); }
+      function sfxHit() { playSound(180, 'triangle', 0.08, 0.1); }
+      function sfxBlock() { playSound(250, 'triangle', 0.05, 0.08); }
+
+      // ==================== GAME DATA ====================
+      const FIGHTERS = [
+        { id:0, name:'RYU', style:'Karate', color:'#e74c3c', hp:100, spd:6, atk:12, def:8 },
+        { id:1, name:'NINJA', style:'Ninjutsu', color:'#2c3e50', hp:85, spd:9, atk:10, def:5 },
+        { id:2, name:'BOXER', style:'Boxing', color:'#f39c12', hp:95, spd:7, atk:14, def:7 },
+        { id:3, name:'TIGER', style:'Muay Thai', color:'#e67e22', hp:90, spd:8, atk:13, def:6 },
+        { id:4, name:'GRAPPLE', style:'Wrestling', color:'#9b59b6', hp:110, spd:5, atk:15, def:10 },
+        { id:5, name:'SAMURAI', style:'Kenjutsu', color:'#7d3c98', hp:100, spd:6, atk:12, def:9 },
+        { id:6, name:'REAPER', style:'Assassin', color:'#1a1a1a', hp:80, spd:10, atk:11, def:4 },
+        { id:7, name:'MONK', style:'Kung Fu', color:'#f1c40f', hp:90, spd:8, atk:10, def:8 },
+        { id:8, name:'CYBORG', style:'Tech', color:'#3498db', hp:105, spd:5, atk:14, def:9 },
+        { id:9, name:'BEAST', style:'Wild', color:'#27ae60', hp:95, spd:7, atk:13, def:7 },
+        { id:10, name:'MAGE', style:'Magic', color:'#8e44ad', hp:80, spd:7, atk:16, def:5 },
+        { id:11, name:'DRAGON', style:'Dragon', color:'#c0392b', hp:100, spd:6, atk:15, def:8 }
+      ];
+
+      const STAGES = [
+        { name:'City', sky:'#1a1a2e', ground:'#2c3e50' },
+        { name:'Temple', sky:'#3e2723', ground:'#4e342e' },
+        { name:'Forest', sky:'#1b5e20', ground:'#2e7d32' },
+        { name:'Dojo', sky:'#bf360c', ground:'#d84315' },
+        { name:'Volcano', sky:'#b71c1c', ground:'#c62828' },
+        { name:'Snow', sky:'#90a4ae', ground:'#b0bec5' },
+        { name:'Castle', sky:'#37474f', ground:'#455a64' },
+        { name:'Desert', sky:'#f9a825', ground:'#f57f17' },
+        { name:'Arena', sky:'#4a148c', ground:'#6a1b9a' },
+        { name:'Neon', sky:'#1a237e', ground:'#283593' }
+      ];
+
+      // ==================== GAME STATE ====================
+      const STATE = { MENU:0, SELECT:1, FIGHT:2 };
+      let gameState = STATE.MENU;
+      let menuOption = 0;
+      let selP1 = 0;
+      let selP2 = 1;
+      let currentStage = STAGES[0];
+      let frame = 0;
+      let shakeTimer = 0;
+      let slowmoTimer = 0;
+      let particles = [];
+
+      // ==================== FIGHTER CLASS ====================
+      class Fighter {
+        constructor(data, x, dir) {
+          this.data = data;
+          this.x = x;
+          this.y = 0;
+          this.groundY = 0;
+          this.w = 60;
+          this.h = 90;
+          this.hp = data.hp;
+          this.maxHp = data.hp;
+          this.energy = 0;
+          this.ultra = 0;
+          this.dir = dir;
+          this.vx = 0;
+          this.vy = 0;
+          this.grounded = true;
+          this.blocking = false;
+          this.atkCD = 0;
+          this.stun = 0;
+          this.specialCD = 0;
+          this.state = 'idle';
+        }
         
-        ctx.fillStyle = "#fff";
-        ctx.font = "6px Orbitron";
-        ctx.textAlign = "center";
-        ctx.fillText(edata.name, enemy.x, enemy.y - edata.size/2 - 16);
-        ctx.textAlign = "start";
+        update() {
+          if (this.stun > 0) this.stun--;
+          if (this.atkCD > 0) this.atkCD--;
+          if (this.specialCD > 0) this.specialCD--;
+          
+          this.x += this.vx;
+          
+          if (!this.grounded) {
+            this.vy += 0.9;
+            this.y += this.vy;
+            if (this.y >= this.groundY) {
+              this.y = this.groundY;
+              this.vy = 0;
+              this.grounded = true;
+            }
+          }
+          
+          if (this.x < 20) this.x = 20;
+          if (this.x > canvas.width - 80) this.x = canvas.width - 80;
+          
+          if (this.atkCD <= 0 && this.stun <= 0) this.state = 'idle';
+        }
+        
+        hit(dmg, kb) {
+          if (this.blocking) {
+            dmg *= 0.2;
+            sfxBlock();
+          } else {
+            sfxHit();
+          }
+          dmg = dmg * (1 - this.data.def / 120);
+          this.hp = Math.max(0, this.hp - dmg);
+          this.energy = Math.min(100, this.energy + dmg * 0.5);
+          this.ultra = Math.min(100, this.ultra + dmg * 0.8);
+          this.stun = 14;
+          if (kb && !this.blocking) {
+            this.vx = kb * 7;
+            this.vy = -4;
+            this.grounded = false;
+          }
+        }
+        
+        draw(ctx) {
+          ctx.save();
+          const sx = shakeTimer > 0 ? (Math.random() - 0.5) * 8 : 0;
+          const sy = shakeTimer > 0 ? (Math.random() - 0.5) * 6 : 0;
+          ctx.translate(this.x + sx, this.y + sy);
+          
+          if (this.dir < 0) {
+            ctx.translate(this.w, 0);
+            ctx.scale(-1, 1);
+          }
+          
+          // Shadow
+          ctx.fillStyle = 'rgba(0,0,0,0.3)';
+          ctx.fillRect(5, this.h - 3, this.w - 10, 6);
+          
+          // Body
+          ctx.fillStyle = this.data.color;
+          ctx.fillRect(8, 12, this.w - 16, this.h - 24);
+          
+          // Head
+          ctx.fillStyle = '#ffdbac';
+          ctx.fillRect(12, -12, this.w - 24, 28);
+          
+          // Eyes
+          ctx.fillStyle = this.state === 'ultimate' ? '#ff0' : '#000';
+          ctx.fillRect(18, -4, 6, 6);
+          ctx.fillRect(30, -4, 6, 6);
+          
+          // Arms
+          if (this.state === 'punch') {
+            ctx.fillStyle = this.data.color;
+            ctx.fillRect(-20, 20, 28, 10);
+          } else if (this.state === 'kick') {
+            ctx.fillStyle = this.data.color;
+            ctx.fillRect(this.w - 8, 55, 28, 10);
+          } else {
+            ctx.fillStyle = this.data.color;
+            ctx.fillRect(-10, 18, 16, 10);
+            ctx.fillRect(this.w - 6, 18, 16, 10);
+          }
+          
+          // Effects
+          if (this.blocking) {
+            ctx.strokeStyle = '#3498db';
+            ctx.lineWidth = 3;
+            ctx.strokeRect(-3, -15, this.w + 6, this.h + 6);
+          }
+          if (this.state === 'special') {
+            ctx.shadowColor = '#ff0';
+            ctx.shadowBlur = 15;
+          }
+          if (this.state === 'ultimate') {
+            ctx.shadowColor = '#f00';
+            ctx.shadowBlur = 25;
+            ctx.strokeStyle = '#ff0';
+            ctx.lineWidth = 4;
+            ctx.strokeRect(-5, -17, this.w + 10, this.h + 10);
+          }
+          ctx.shadowBlur = 0;
+          ctx.restore();
+        }
+      }
+
+      // ==================== PLAYERS ====================
+      let p1 = null;
+      let p2 = null;
+
+      function createPlayers() {
+        const f1 = FIGHTERS[selP1];
+        const f2 = FIGHTERS[selP2];
+        p1 = new Fighter(f1, canvas.width * 0.2, 1);
+        p2 = new Fighter(f2, canvas.width * 0.7, -1);
+        p1.groundY = canvas.height - 100;
+        p2.groundY = canvas.height - 100;
+        p1.y = p1.groundY;
+        p2.y = p2.groundY;
+        particles = [];
+        shakeTimer = 0;
+        slowmoTimer = 0;
+      }
+
+      // ==================== TOUCH BUTTONS ====================
+      let buttons = [];
+
+      function createButtons() {
+        const w = canvas.width;
+        const h = canvas.height;
+        const bs = Math.min(65, h * 0.12);
+        const ss = Math.min(45, h * 0.08);
+        const gap = 10;
+        
+        buttons = [
+          { id:'left',   x:gap, y:h-bs-gap, w:bs, h:bs, label:'◀', color:'#333' },
+          { id:'right',  x:gap*2+bs, y:h-bs-gap, w:bs, h:bs, label:'▶', color:'#333' },
+          { id:'block',  x:gap*2+bs, y:h-bs-ss-gap*2, w:bs, h:ss, label:'🛡', color:'#2980b9' },
+          { id:'punch',  x:w-bs*2-gap*2, y:h-bs-gap, w:bs, h:bs, label:'👊', color:'#c0392b' },
+          { id:'kick',   x:w-bs-gap, y:h-bs-gap, w:bs, h:bs, label:'🦵', color:'#d35400' },
+          { id:'special',x:w-bs*2-gap*2, y:h-bs-ss-gap*2, w:bs, h:ss, label:'⚡', color:'#8e44ad' },
+          { id:'ultra',  x:w-bs-gap, y:h-bs-ss-gap*2, w:bs, h:ss, label:'💥', color:'#f39c12' }
+        ];
+      }
+
+      function getButton(x, y) {
+        return buttons.find(b => x >= b.x && x <= b.x + b.w && y >= b.y && y <= b.y + b.h);
+      }
+
+      function doAction(id) {
+        if (!p1 || p1.stun > 0) return;
+        switch(id) {
+          case 'left': p1.vx = -4; p1.dir = -1; break;
+          case 'right': p1.vx = 4; p1.dir = 1; break;
+          case 'block': p1.blocking = true; p1.vx = 0; break;
+          case 'punch':
+            if (p1.atkCD <= 0) {
+              p1.atkCD = 10; p1.state = 'punch';
+              sfxPunch();
+              attack(p1, p2, 8);
+            }
+            break;
+          case 'kick':
+            if (p1.atkCD <= 0) {
+              p1.atkCD = 14; p1.state = 'kick';
+              sfxKick();
+              attack(p1, p2, 13);
+            }
+            break;
+          case 'special':
+            if (p1.specialCD <= 0 && p1.energy >= 25) {
+              p1.energy -= 25; p1.specialCD = 40; p1.state = 'special';
+              sfxSpecial();
+              attack(p1, p2, 20);
+              spawnParticles(p2.x + 30, p2.y + 40, 20, '#ff0');
+              shakeTimer = 10;
+            }
+            break;
+          case 'ultra':
+            if (p1.ultra >= 90) {
+              p1.ultra = 0; p1.state = 'ultimate';
+              sfxUltimate();
+              attack(p1, p2, 40);
+              spawnParticles(p2.x + 30, p2.y + 40, 35, '#f00');
+              shakeTimer = 20;
+              slowmoTimer = 15;
+            }
+            break;
+        }
+      }
+
+      function attack(atk, def, dmg) {
+        const dist = Math.abs(atk.x - def.x);
+        if (dist < 110) {
+          const dir = atk.dir;
+          def.hit(dmg * (atk.data.atk / 10), dir);
+          spawnParticles(def.x + 30, def.y + 30, dmg, '#fff');
+        }
+      }
+
+      function spawnParticles(x, y, n, color) {
+        for (let i = 0; i < n; i++) {
+          particles.push({
+            x, y, color,
+            vx: (Math.random() - 0.5) * 6,
+            vy: (Math.random() - 0.5) * 6 - 3,
+            life: 20 + Math.random() * 15,
+            size: 2 + Math.random() * 5
+          });
+        }
+      }
+
+      // ==================== AI ====================
+      function aiThink() {
+        if (!p2 || p2.stun > 0) return;
+        if (frame % 15 !== 0) return;
+        
+        const dx = p1.x - p2.x;
+        const dist = Math.abs(dx);
+        p2.dir = dx > 0 ? 1 : -1;
+        p2.vx = 0;
+        p2.blocking = false;
+        
+        if (dist < 70) {
+          if (Math.random() < 0.3) p2.blocking = true;
+          if (p2.atkCD <= 0 && Math.random() < 0.4) aiAttack(Math.random() < 0.5 ? 'punch' : 'kick');
+        } else if (dist < 200) {
+          p2.vx = (dx > 0 ? 1 : -1) * 3;
+          if (p2.atkCD <= 0 && Math.random() < 0.3) aiAttack('punch');
+          if (p2.specialCD <= 0 && p2.energy >= 25 && Math.random() < 0.15) aiAttack('special');
+        } else {
+          p2.vx = (dx > 0 ? 1 : -1) * 4;
+        }
+        
+        if (p2.ultra >= 85 && Math.random() < 0.08) aiAttack('ultra');
+      }
+
+      function aiAttack(type) {
+        if (!p2 || p2.stun > 0) return;
+        const dist = Math.abs(p1.x - p2.x);
+        if (dist > 120 && type !== 'ultra') return;
+        
+        switch(type) {
+          case 'punch':
+            if (p2.atkCD <= 0) { p2.atkCD = 10; p2.state = 'punch'; attack(p2, p1, 7); }
+            break;
+          case 'kick':
+            if (p2.atkCD <= 0) { p2.atkCD = 14; p2.state = 'kick'; attack(p2, p1, 11); }
+            break;
+          case 'special':
+            if (p2.specialCD <= 0 && p2.energy >= 25) {
+              p2.energy -= 25; p2.specialCD = 40; p2.state = 'special';
+              attack(p2, p1, 18);
+              spawnParticles(p1.x + 30, p1.y + 40, 20, '#ff0');
+            }
+            break;
+          case 'ultra':
+            if (p2.ultra >= 85) {
+              p2.ultra = 0; p2.state = 'ultimate';
+              attack(p2, p1, 38);
+              spawnParticles(p1.x + 30, p1.y + 40, 35, '#f00');
+              shakeTimer = 20;
+              slowmoTimer = 15;
+            }
+            break;
+        }
+      }
+
+      // ==================== DRAWING ====================
+      function drawStage() {
+        const grad = ctx.createLinearGradient(0, 0, 0, canvas.height);
+        grad.addColorStop(0, currentStage.sky);
+        grad.addColorStop(1, currentStage.ground);
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        ctx.fillStyle = currentStage.ground;
+        ctx.fillRect(0, canvas.height - 80, canvas.width, 80);
+        
+        ctx.strokeStyle = '#fff';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(0, canvas.height - 80);
+        ctx.lineTo(canvas.width, canvas.height - 80);
+        ctx.stroke();
+      }
+
+      function drawUI() {
+        if (!p1 || !p2) return;
+        const bw = 280;
+        const bh = 20;
+        const y = 15;
+        
+        // P1
+        ctx.fillStyle = '#333';
+        ctx.fillRect(15, y, bw, bh);
+        ctx.fillStyle = p1.hp / p1.maxHp > 0.5 ? '#2ecc71' : '#e74c3c';
+        ctx.fillRect(15, y, bw * (p1.hp / p1.maxHp), bh);
+        ctx.strokeStyle = '#fff';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(15, y, bw, bh);
+        ctx.fillStyle = '#fff';
+        ctx.font = 'bold 14px Arial';
+        ctx.fillText(p1.data.name, 15, y - 5);
+        ctx.fillText('EP:' + Math.floor(p1.energy), 15, y + bh + 15);
+        ctx.fillText('ULT:' + Math.floor(p1.ultra), 15, y + bh + 32);
+        
+        // P2
+        const px = canvas.width - bw - 15;
+        ctx.fillStyle = '#333';
+        ctx.fillRect(px, y, bw, bh);
+        ctx.fillStyle = p2.hp / p2.maxHp > 0.5 ? '#2ecc71' : '#e74c3c';
+        ctx.fillRect(px + bw * (1 - p2.hp / p2.maxHp), y, bw * (p2.hp / p2.maxHp), bh);
+        ctx.strokeStyle = '#fff';
+        ctx.strokeRect(px, y, bw, bh);
+        ctx.fillStyle = '#fff';
+        ctx.textAlign = 'right';
+        ctx.fillText(p2.data.name, canvas.width - 15, y - 5);
+        ctx.fillText('EP:' + Math.floor(p2.energy), canvas.width - 15, y + bh + 15);
+        ctx.fillText('ULT:' + Math.floor(p2.ultra), canvas.width - 15, y + bh + 32);
+        ctx.textAlign = 'left';
+        
+        // Timer
+        ctx.fillStyle = '#fff';
+        ctx.font = 'bold 30px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText('VS', canvas.width / 2, y + 25);
+        ctx.textAlign = 'left';
+      }
+
+      function drawButtons() {
+        buttons.forEach(b => {
+          ctx.fillStyle = b.color;
+          ctx.globalAlpha = 0.5;
+          ctx.fillRect(b.x, b.y, b.w, b.h);
+          ctx.globalAlpha = 1;
+          ctx.strokeStyle = '#fff';
+          ctx.lineWidth = 2;
+          ctx.strokeRect(b.x, b.y, b.w, b.h);
+          ctx.fillStyle = '#fff';
+          ctx.font = Math.floor(b.w * 0.35) + 'px Arial';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(b.label, b.x + b.w / 2, b.y + b.h / 2);
+        });
+      }
+
+      function drawMenu() {
+        ctx.fillStyle = '#0a0a1a';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        // Animated bg
+        for (let i = 0; i < 15; i++) {
+          const x = (frame * 0.5 + i * 120) % (canvas.width + 200) - 100;
+          const y = canvas.height * 0.5 + Math.sin(frame * 0.02 + i) * 80;
+          ctx.fillStyle = 'rgba(233,69,96,' + (0.05 + Math.sin(frame * 0.03 + i) * 0.05) + ')';
+          ctx.fillRect(x, y, 60, 60);
+        }
+        
+        ctx.fillStyle = '#fff';
+        ctx.font = 'bold 40px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText('STRIKER LEGENDS', canvas.width / 2, canvas.height * 0.25);
+        
+        const items = ['⚔️  FIGHT', '👥  SELECT FIGHTERS'];
+        items.forEach((item, i) => {
+          const y = canvas.height * 0.45 + i * 80;
+          if (menuOption === i) {
+            ctx.fillStyle = 'rgba(233,69,96,0.3)';
+            ctx.fillRect(canvas.width / 2 - 160, y - 25, 320, 50);
+          }
+          ctx.fillStyle = menuOption === i ? '#e94560' : '#ccc';
+          ctx.font = '28px Arial';
+          ctx.fillText(item, canvas.width / 2, y);
+        });
+        
+        ctx.fillStyle = '#888';
+        ctx.font = '16px Arial';
+        ctx.fillText('Tap to select', canvas.width / 2, canvas.height - 40);
+        ctx.textAlign = 'left';
+      }
+
+      function drawSelect() {
+        ctx.fillStyle = '#111';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        ctx.fillStyle = '#fff';
+        ctx.font = 'bold 26px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText('SELECT FIGHTERS', canvas.width / 2, 40);
+        
+        const cols = 6;
+        const cw = Math.min(110, (canvas.width - 80) / cols);
+        const ch = cw * 1.2;
+        const sx = (canvas.width - (cw * cols + 8 * (cols - 1))) / 2;
+        const sy = 80;
+        
+        FIGHTERS.forEach((f, i) => {
+          const col = i % cols;
+          const row = Math.floor(i / cols);
+          const x = sx + col * (cw + 8);
+          const y = sy + row * (ch + 8);
+          
+          ctx.fillStyle = '#1a1a2e';
+          ctx.fillRect(x, y, cw, ch);
+          ctx.fillStyle = f.color;
+          ctx.fillRect(x + 4, y + 4, cw - 8, ch - 30);
+          ctx.fillStyle = '#fff';
+          ctx.font = (cw * 0.12) + 'px Arial';
+          ctx.fillText(f.name, x + cw / 2, y + ch - 18);
+          ctx.font = (cw * 0.1) + 'px Arial';
+          ctx.fillText(f.style, x + cw / 2, y + ch - 5);
+          
+          if (i === selP1) {
+            ctx.strokeStyle = '#ff0';
+            ctx.lineWidth = 3;
+            ctx.strokeRect(x - 2, y - 2, cw + 4, ch + 4);
+            ctx.fillText('YOU', x + cw / 2, y - 8);
+          }
+          if (i === selP2) {
+            ctx.strokeStyle = '#3498db';
+            ctx.lineWidth = 3;
+            ctx.strokeRect(x - 2, y - 2, cw + 4, ch + 4);
+            ctx.fillText('CPU', x + cw / 2, y - 8);
+          }
+        });
+        
+        ctx.fillStyle = '#aaa';
+        ctx.font = '14px Arial';
+        ctx.fillText('Tap fighter to select | Tap top to confirm', canvas.width / 2, canvas.height - 20);
+        ctx.textAlign = 'left';
+      }
+
+      // ==================== MAIN LOOP ====================
+      function update() {
+        if (gameState === STATE.FIGHT) {
+          if (slowmoTimer > 0) {
+            slowmoTimer--;
+            if (frame % 2 !== 0) return;
+          }
+          if (shakeTimer > 0) shakeTimer--;
+          
+          if (p1) p1.update();
+          if (p2) p2.update();
+          aiThink();
+          
+          particles = particles.filter(p => {
+            p.x += p.vx;
+            p.y += p.vy;
+            p.vy += 0.1;
+            p.life--;
+            return p.life > 0;
+          });
+          
+          // Win check
+          if (p1 && p1.hp <= 0) {
+            gameState = STATE.MENU;
+            p1 = null; p2 = null;
+          }
+          if (p2 && p2.hp <= 0) {
+            gameState = STATE.MENU;
+            p1 = null; p2 = null;
+          }
+        }
+      }
+
+      function draw() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        if (gameState === STATE.MENU) {
+          drawMenu();
+        } else if (gameState === STATE.SELECT) {
+          drawSelect();
+        } else if (gameState === STATE.FIGHT) {
+          drawStage();
+          if (p2) p2.draw(ctx);
+          if (p1) p1.draw(ctx);
+          particles.forEach(p => {
+            ctx.globalAlpha = p.life / 30;
+            ctx.fillStyle = p.color;
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+            ctx.fill();
+          });
+          ctx.globalAlpha = 1;
+          drawUI();
+          drawButtons();
+        }
+      }
+
+      function loop() {
+        frame++;
+        update();
+        draw();
+        requestAnimationFrame(loop);
+      }
+
+      // ==================== INPUT HANDLERS ====================
+      function handleTap(x, y) {
+        initAudio();
+        
+        if (gameState === STATE.MENU) {
+          if (menuOption === 0) {
+            // Fight
+            currentStage = STAGES[Math.floor(Math.random() * STAGES.length)];
+            createPlayers();
+            createButtons();
+            gameState = STATE.FIGHT;
+          } else if (menuOption === 1) {
+            gameState = STATE.SELECT;
+          }
+          sfxSelect();
+        } else if (gameState === STATE.SELECT) {
+          // Check if tapped on a fighter
+          const cols = 6;
+          const cw = Math.min(110, (canvas.width - 80) / cols);
+          const ch = cw * 1.2;
+          const sx = (canvas.width - (cw * cols + 8 * (cols - 1))) / 2;
+          const sy = 80;
+          
+          let tappedFighter = false;
+          FIGHTERS.forEach((f, i) => {
+            const col = i % cols;
+            const row = Math.floor(i / cols);
+            const fx = sx + col * (cw + 8);
+            const fy = sy + row * (ch + 8);
+            if (x >= fx && x <= fx + cw && y >= fy && y <= fy + ch) {
+              if (x < canvas.width / 2) selP1 = i;
+              else selP2 = i;
+              tappedFighter = true;
+              sfxSelect();
+            }
+          });
+          
+          if (!tappedFighter && y < sy) {
+            // Confirm selection and start fight
+            currentStage = STAGES[Math.floor(Math.random() * STAGES.length)];
+            createPlayers();
+            createButtons();
+            gameState = STATE.FIGHT;
+            sfxSelect();
+          }
+        }
+      }
+
+      canvas.addEventListener('touchstart', function(e) {
+        e.preventDefault();
+        const touch = e.touches[0];
+        const x = touch.clientX;
+        const y = touch.clientY;
+        
+        if (gameState === STATE.FIGHT) {
+          const btn = getButton(x, y);
+          if (btn) doAction(btn.id);
+        } else {
+          handleTap(x, y);
+        }
+      }, { passive: false });
+
+      canvas.addEventListener('touchmove', function(e) {
+        e.preventDefault();
+        if (gameState === STATE.FIGHT) {
+          const touch = e.touches[0];
+          const btn = getButton(touch.clientX, touch.clientY);
+          if (btn && (btn.id === 'left' || btn.id === 'right' || btn.id === 'block')) {
+            doAction(btn.id);
+          }
+        }
+      }, { passive: false });
+
+      canvas.addEventListener('touchend', function(e) {
+        e.preventDefault();
+        if (gameState === STATE.FIGHT && p1) {
+          p1.vx = 0;
+          p1.blocking = false;
+        }
       });
 
-      // Draw player
-      if (player.hp > 0 || player.state === "death") {
-        drawCharacter(ctx, player.x, player.y, 2.0, player.dir, frameRef.current * 0.3, player.state, character);
-      }
+      canvas.addEventListener('click', function(e) {
+        if (gameState !== STATE.FIGHT) {
+          handleTap(e.clientX, e.clientY);
+        }
+      });
 
-      // Draw particles
-      particlesRef.current = particlesRef.current.filter(p => p.life > 0);
-      for (const p of particlesRef.current) {
-        p.x += p.vx;
-        p.y += p.vy;
-        p.vx *= 0.98;
-        p.vy += 0.05;
-        p.life -= p.decay;
-        ctx.save();
-        ctx.globalAlpha = Math.max(0, p.life);
-        ctx.fillStyle = p.color;
-        ctx.shadowColor = p.color;
-        ctx.shadowBlur = p.size * 2;
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, p.size * p.life, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.restore();
-      }
+      // Keyboard support for testing
+      window.addEventListener('keydown', function(e) {
+        initAudio();
+        if (gameState === STATE.MENU) {
+          if (e.key === 'ArrowDown') { menuOption = 1; sfxMove(); }
+          if (e.key === 'ArrowUp') { menuOption = 0; sfxMove(); }
+          if (e.key === 'Enter') handleTap(canvas.width/2, canvas.height/2);
+        } else if (gameState === STATE.SELECT) {
+          if (e.key === 'ArrowLeft') { selP1 = (selP1 - 1 + 12) % 12; sfxMove(); }
+          if (e.key === 'ArrowRight') { selP1 = (selP1 + 1) % 12; sfxMove(); }
+          if (e.key === 'ArrowUp') { selP2 = (selP2 - 1 + 12) % 12; sfxMove(); }
+          if (e.key === 'ArrowDown') { selP2 = (selP2 + 1) % 12; sfxMove(); }
+          if (e.key === 'Enter') {
+            currentStage = STAGES[Math.floor(Math.random() * STAGES.length)];
+            createPlayers();
+            createButtons();
+            gameState = STATE.FIGHT;
+          }
+        } else if (gameState === STATE.FIGHT) {
+          if (e.key === 'a') doAction('left');
+          if (e.key === 'd') doAction('right');
+          if (e.key === 's') doAction('block');
+          if (e.key === 'j') doAction('punch');
+          if (e.key === 'k') doAction('kick');
+          if (e.key === 'u') doAction('special');
+          if (e.key === 'i') doAction('ultra');
+        }
+      });
 
-      // Damage numbers
-      damageNumbersRef.current = damageNumbersRef.current.filter(d => d.life > 0);
-      for (const d of damageNumbersRef.current) {
-        d.y -= 1.5;
-        d.life -= d.decay;
-        ctx.save();
-        ctx.globalAlpha = Math.max(0, d.life);
-        ctx.font = d.isCrit ? "bold 14px Orbitron" : "11px Orbitron";
-        ctx.fillStyle = d.isCrit ? "#ffcc00" : "#ff4444";
-        ctx.shadowColor = d.isCrit ? "#ff8800" : "#ff0000";
-        ctx.shadowBlur = 6;
-        ctx.textAlign = "center";
-        ctx.fillText(d.isCrit ? `CRIT! ${d.value}` : `-${d.value}`, d.x, d.y);
-        ctx.restore();
-      }
+      window.addEventListener('keyup', function(e) {
+        if (gameState === STATE.FIGHT && p1) {
+          if (e.key === 'a' || e.key === 'd') p1.vx = 0;
+          if (e.key === 's') p1.blocking = false;
+        }
+      });
 
-      // Update HUD periodically
-      if (frameRef.current % 10 === 0) {
-        setHud(prev => ({
-          ...prev,
-          hp: player.hp,
-          mp: player.mp,
-          state: player.state,
-        }));
-      }
-
-      // Check game over
-      if (player.hp <= 0 && !gameOver) {
-        setGameOver(true);
-      }
-
-      frameRef.current++;
-      animRef.current = requestAnimationFrame(loop);
-    };
-
-    animRef.current = requestAnimationFrame(loop);
-    return () => cancelAnimationFrame(animRef.current);
-  }, [character, spawnParticles, spawnDamage, gameOver]);
-
-  return (
-    <div className="game-world">
-      <canvas ref={canvasRef} width={900} height={450} />
-      
-      {/* HUD */}
-      <div className="game-hud-top">
-        <div className="hud-panel" style={{ minWidth: 160 }}>
-          <div style={{ display: "flex", justifyContent: "space-between" }}>
-            <span>{character.name}</span>
-            <span>{t.level}{hud.level}</span>
-          </div>
-          <div style={{ fontSize: 8, color: "#aaa" }}>❤️ HP</div>
-          <div className="hp-bar-bg">
-            <div className="hp-bar-fill" style={{ width: `${(hud.hp / hud.maxHp) * 100}%` }} />
-          </div>
-          <div style={{ fontSize: 8, color: "#aaa", marginTop: 3 }}>💎 MP</div>
-          <div className="hp-bar-bg">
-            <div className="mp-bar-fill" style={{ width: `${(hud.mp / hud.maxMp) * 100}%` }} />
-          </div>
-          <div style={{ fontSize: 7, color: "#5a3a8a", marginTop: 3 }}>
-            XP: {hud.xp}/{hud.nextXp} | ⭐ {hud.score}
-          </div>
-        </div>
-        <div className="hud-panel" style={{ fontSize: 8 }}>
-          {ANIM_STATES[hud.state] ? hud.state.replace(/_/g, " ") : hud.state}
-        </div>
-      </div>
-
-      {/* Joystick */}
-      <Joystick onMove={handleJoystickMove} />
-
-      {/* Skill Buttons */}
-      <div className="skill-buttons">
-        <div className="skill-row">
-          {SKILLS.map(skill => {
-            const cdRemaining = cooldowns[skill.id] || 0;
-            const canUse = hud.mp >= skill.mp && cdRemaining === 0;
-            return (
-              <button
-                key={skill.id}
-                className="skill-btn"
-                style={{
-                  borderColor: canUse ? skill.color : "#444",
-                  opacity: canUse ? 1 : 0.5,
-                  color: skill.color,
-                }}
-                onClick={() => useSkill(skill.id)}
-                disabled={!canUse}
-              >
-                {skill.icon}
-                {cdRemaining > 0 && (
-                  <div className="cooldown">
-                    {Math.ceil(cdRemaining / 1000)}s
-                  </div>
-                )}
-                <span className="skill-label">{skill.mp}MP</span>
-              </button>
-            );
-          })}
-        </div>
-        <button
-          className="skill-btn attack-btn"
-          onClick={attack}
-          style={{ alignSelf: "center" }}
-        >
-          ⚔️
-          <span className="skill-label" style={{ bottom: -16 }}>ATK</span>
-        </button>
-      </div>
-
-      {/* Back button */}
-      <button className="back-btn" onClick={onBack}>{t.back}</button>
-
-      {/* Game Over */}
-      {gameOver && (
-        <div style={{
-          position: "absolute", inset: 0, background: "rgba(0,0,0,0.8)",
-          display: "flex", alignItems: "center", justifyContent: "center",
-          zIndex: 50, flexDirection: "column",
-        }}>
-          <div style={{ fontSize: 36, color: "#ff2244", fontFamily: "Orbitron", fontWeight: 900, marginBottom: 8 }}>
-            {t.gameOver}
-          </div>
-          <div style={{ color: "#fff", fontFamily: "Orbitron", fontSize: 16, marginBottom: 6 }}>
-            {t.level}{hud.level} · {t.score}: {hud.score}
-          </div>
-          <button onClick={onBack} style={{
-            background: "linear-gradient(135deg, #6c3fc5, #b040ff)",
-            border: "none", color: "#fff", padding: "12px 28px", borderRadius: 10,
-            fontFamily: "Orbitron", fontSize: 12, cursor: "pointer", marginTop: 10,
-          }}>{t.retry}</button>
-        </div>
-      )}
-    </div>
-  );
-}
-
-// ============================================================
-// OTHER PAGES
-// ============================================================
-function HomePage({ onPlay, t }) {
-  const [selected, setSelected] = useState(null);
-  return (
-    <div className="home-page">
-      <h2 style={{ fontFamily: "Orbitron", color: "#c090ff", fontSize: 16, marginBottom: 4 }}>{t.select}</h2>
-      <p style={{ color: "#5a3a8a", fontSize: 9, marginBottom: 16 }}>{t.choose}</p>
-      <div className="character-select">
-        {CHARACTERS.map(c => (
-          <div key={c.id} className={`char-card ${selected?.id === c.id ? "selected" : ""}`}
-            onClick={() => setSelected(c)}>
-            <div className="char-avatar" style={{ background: `${c.color}22`, border: `2px solid ${c.color}` }}>
-              {c.icon}
-            </div>
-            <div className="char-name">{c.name}</div>
-            <div style={{ color: c.color, fontSize: 9, fontFamily: "Orbitron" }}>{c.className}</div>
-            <div style={{ fontSize: 8, color: "#5a3a8a", marginTop: 4 }}>
-              ❤️{c.stats.hp} ⚔️{c.stats.atk} 🛡️{c.stats.def} ⚡{c.stats.spd}
-            </div>
-          </div>
-        ))}
-      </div>
-      {selected && (
-        <div style={{ background: "rgba(20,10,40,0.8)", border: `1px solid ${selected.color}44`, borderRadius: 10, padding: 12, maxWidth: 450, margin: "0 auto 16px" }}>
-          <p style={{ color: "#8060aa", fontSize: 9 }}>{selected.desc}</p>
-        </div>
-      )}
-      <button className="play-btn" disabled={!selected} onClick={() => selected && onPlay(selected)}>
-        {t.play}
-      </button>
-    </div>
-  );
-}
-
-function ItemsPage({ t }) {
-  return (
-    <div className="items-page">
-      <h2 style={{ fontFamily: "Orbitron", color: "#c090ff", fontSize: 14, marginBottom: 12 }}>{t.inv}</h2>
-      <div className="items-grid">
-        {ITEMS.map(item => (
-          <div key={item.id} className="item-slot">
-            <div className="item-icon">{item.icon}</div>
-            <div style={{ fontFamily: "Orbitron", fontSize: 8, color: item.color }}>{item.name}</div>
-            <div style={{ fontSize: 7, color: "#5a3a8a" }}>{item.desc}</div>
-            <span style={{ fontSize: 6, color: item.color, textTransform: "uppercase", letterSpacing: 1 }}>
-              {item.rarity}
-            </span>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function InfoPage({ t }) {
-  return (
-    <div className="info-page">
-      <h2 style={{ fontFamily: "Orbitron", color: "#c090ff", fontSize: 14, marginBottom: 10 }}>{t.animInfo}</h2>
-      <p style={{ fontSize: 9, color: "#8060aa", marginBottom: 12 }}>{t.animDesc}</p>
-      <div className="info-section">
-        <h3>{t.states} ({Object.keys(ANIM_STATES).length})</h3>
-        <ul style={{ listStyle: "none", padding: 0 }}>
-          {Object.entries(ANIM_STATES).map(([k, v]) => (
-            <li key={k}>{k.replace(/_/g, " ")} · {v.frames}f · {v.fps}fps · {v.loop ? "LOOP" : "ONCE"}</li>
-          ))}
-        </ul>
-      </div>
-      <div className="info-section">
-        <h3>{t.skills} ({SKILLS.length})</h3>
-        <ul style={{ listStyle: "none", padding: 0 }}>
-          {SKILLS.map(s => (
-            <li key={s.id}>{s.icon} {s.name} · {s.desc} · CD: {s.cooldown/1000}s · MP: {s.mp}</li>
-          ))}
-        </ul>
-      </div>
-      <div className="info-section">
-        <h3>{t.enemies} ({ENEMIES.length})</h3>
-        <ul style={{ listStyle: "none", padding: 0 }}>
-          {ENEMIES.map(e => (
-            <li key={e.id}>{e.name} · HP:{e.hp} · ATK:{e.atk}</li>
-          ))}
-        </ul>
-      </div>
-    </div>
-  );
-}
-
-function LanguagePage({ lang, setLang }) {
-  return (
-    <div className="language-page">
-      <h2 style={{ fontFamily: "Orbitron", color: "#c090ff", fontSize: 16 }}>🌐 Language</h2>
-      <div style={{ marginTop: 16 }}>
-        {Object.entries(LANGUAGES).map(([code, l]) => (
-          <button key={code} className={`lang-btn ${lang === code ? "active" : ""}`}
-            onClick={() => setLang(code)}>
-            {l.flag} {l.name}
-          </button>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function AboutPage({ t }) {
-  return (
-    <div className="about-page">
-      <div style={{ fontSize: 50, marginBottom: 8 }}>⚔️</div>
-      <h2 style={{ fontFamily: "Orbitron", color: "#fff", fontSize: 18 }}>{t.aboutTitle}</h2>
-      <p style={{ color: "#5a3a8a", fontSize: 9, marginBottom: 16 }}>{t.version}</p>
-      <div style={{ background: "rgba(20,10,40,0.6)", border: "1px solid rgba(108,63,197,0.3)", borderRadius: 10, padding: 16, maxWidth: 450, margin: "0 auto", textAlign: "left" }}>
-        <p style={{ fontSize: 9, color: "#8060aa", marginBottom: 6 }}>{t.engine}</p>
-        <p style={{ fontSize: 8, color: "#5a3a8a" }}>🎨 Enhanced Pixel Art Characters</p>
-        <p style={{ fontSize: 8, color: "#5a3a8a" }}>🎮 Virtual Joystick + Skill Buttons</p>
-        <p style={{ fontSize: 8, color: "#5a3a8a" }}>✨ Particle FX System</p>
-        <p style={{ fontSize: 8, color: "#5a3a8a" }}>🌍 Open World with Enemy AI</p>
-      </div>
-    </div>
-  );
-}
-
-// ============================================================
-// MAIN APP
-// ============================================================
-function App() {
-  const [page, setPage] = useState("home");
-  const [lang, setLang] = useState("en");
-  const [character, setCharacter] = useState(null);
-  const t = T[lang] || T.en;
-
-  return (
-    <div className="game-container">
-      <div className="header">
-        <div className="logo">⚔️ RPG ADVENTURE</div>
-        <nav className="nav-menu">
-          {["home", "items", "info", "language", "about"].map(p => (
-            <button key={p} className={`nav-btn ${page === p ? "active" : ""}`}
-              onClick={() => setPage(p)}>
-              {t[p]}
-            </button>
-          ))}
-        </nav>
-      </div>
-      <div className="content-area">
-        {page === "home" && !character && <HomePage onPlay={(c) => { setCharacter(c); setPage("game"); }} t={t} />}
-        {page === "game" && character && <GameWorld character={character} onBack={() => { setCharacter(null); setPage("home"); }} t={t} />}
-        {page === "items" && <ItemsPage t={t} />}
-        {page === "info" && <InfoPage t={t} />}
-        {page === "language" && <LanguagePage lang={lang} setLang={setLang} />}
-        {page === "about" && <AboutPage t={t} />}
-      </div>
-    </div>
-  );
-}
-
-ReactDOM.render(<App />, document.getElementById("root"));
-</script>
+      // ==================== START ====================
+      checkOrientation();
+      loop();
+    })();
+  </script>
 </body>
 </html>
